@@ -14,6 +14,8 @@ class Player {
     this.memberType = MemberType.regular,
     this.canKeep = false,
     this.isGuest = false,
+    this.memo,
+    this.statsSimple = false,
   }) : subPositions = Set.unmodifiable(subPositions.difference({mainPosition}));
 
   final String id;
@@ -29,6 +31,10 @@ class Player {
   /// 키퍼 가능 여부: 키퍼 고정 자동 배정·로테이션 시작 키퍼 우선 대상.
   final bool canKeep;
   final bool isGuest;
+  final String? memo;
+
+  /// 종합 점수 하나로만 입력된 상태 (선수 목록의 `간단` 배지, SPEC F12).
+  final bool statsSimple;
 
   /// 포지션 적합도: 주 포지션 2, 가능 포지션 1, 그 외 0 (SPEC §6.5).
   int fitFor(Position position) {
@@ -36,6 +42,30 @@ class Player {
     if (subPositions.contains(position)) return 1;
     return 0;
   }
+
+  Player copyWith({
+    String? name,
+    String? Function()? nickname,
+    MemberType? memberType,
+    PlayerStats? stats,
+    Position? mainPosition,
+    Set<Position>? subPositions,
+    bool? canKeep,
+    String? Function()? memo,
+    bool? statsSimple,
+  }) => Player(
+    id: id,
+    name: name ?? this.name,
+    nickname: nickname != null ? nickname() : this.nickname,
+    memberType: memberType ?? this.memberType,
+    stats: stats ?? this.stats,
+    mainPosition: mainPosition ?? this.mainPosition,
+    subPositions: subPositions ?? this.subPositions,
+    canKeep: canKeep ?? this.canKeep,
+    isGuest: isGuest,
+    memo: memo != null ? memo() : this.memo,
+    statsSimple: statsSimple ?? this.statsSimple,
+  );
 
   /// 화면 표시 이름 (별명 우선).
   String get displayName => nickname?.isNotEmpty == true ? nickname! : name;

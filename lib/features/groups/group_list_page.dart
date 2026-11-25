@@ -1,19 +1,46 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../../data/providers.dart';
+import '../../data/repositories/group_repository.dart';
+import '../common/common_widgets.dart';
+import '../group/group_shell_page.dart';
+import '../onboarding/onboarding_page.dart';
+
 /// 첫 화면: 모임 목록 (SPEC F11, §8.2).
-///
-/// M0에서는 화면 골격만 둔다. 모임 생성·초대 참여는 M2/M6.5에서 구현한다.
-class GroupListPage extends StatelessWidget {
-  const GroupListPage({super.key});
+class GroupListPage extends ConsumerStatefulWidget {
+  const GroupListPage({super.key, this.autoEnterSingleGroup = true});
+
+  /// 모임이 1개뿐이면 앱 실행 시 바로 그 모임으로 들어간다 (F11.5).
+  final bool autoEnterSingleGroup;
+
+  @override
+  ConsumerState<GroupListPage> createState() => _GroupListPageState();
+}
+
+class _GroupListPageState extends ConsumerState<GroupListPage> {
+  bool _autoEnterChecked = false;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final groups = ref.watch(groupsProvider);
+
+    if (!_autoEnterChecked && groups.hasValue) {
+      _autoEnterChecked = true;
+      final list = groups.value!;
+      if (widget.autoEnterSingleGroup && list.length == 1) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) _openGroup(list.single);
+        });
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('풋살 팀메이커'),
         actions: [
           TextButton.icon(
+            // 초대 링크 참여는 M6.5에서 구현.
             onPressed: null,
             icon: const Icon(Icons.link),
             label: const Text('초대 링크로 참여'),
@@ -21,33 +48,177 @@ class GroupListPage extends StatelessWidget {
           const SizedBox(width: 8),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Align(
-          alignment: Alignment.topLeft,
-          child: SizedBox(
-            width: 200,
-            height: 140,
-            child: Card.outlined(
-              child: InkWell(
-                onTap: null,
-                borderRadius: BorderRadius.circular(12),
-                child: Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.add,
-                        size: 40,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(height: 8),
-                      const Text('새 모임 만들기'),
-                      Text('준비 중', style: theme.textTheme.bodySmall),
-                    ],
-                  ),
+      body: groups.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => Center(child: Text('불러오지 못했어요: $e')),
+        data: (list) => SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Wrap(
+            spacing: 16,
+            runSpacing: 16,
+            children: [
+              for (final g in list)
+                _GroupCard(
+                  group: g,
+                  onTap: () => _openGroup(g),
+                  onLongPress: () => _showGroupMenu(g),
                 ),
-              ),
+              _CreateGroupCard(onTap: _createGroup),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openGroup(GroupInfo g) async {
+    await ref.read(groupRepositoryProvider).touch(g.id);
+    if (!mounted) return;
+    await Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => GroupShellPage(groupId: g.id)));
+  }
+
+  void _createGroup() =>
+      Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => const OnboardingPage()));
+
+  Future<void> _showGroupMenu(GroupInfo g) async {
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.edit),
+              title: const Text('이름 변경'),
+              onTap: () => Navigator.pop(context, 'rename'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.delete_outline),
+              title: const Text('이 기기에서 모임 삭제'),
+              onTap: () => Navigator.pop(context, 'delete'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (!mounted || action == null) return;
+    final repo = ref.read(groupRepositoryProvider);
+    if (action == 'rename') {
+      final name = await _askName(g.name);
+      if (name != null && name.trim().isNotEmpty) {
+        await repo.updateGroup(g.id, name: name);
+      }
+    } else if (action == 'delete') {
+      final ok = await confirmDialog(
+        context,
+        title: '모임 삭제',
+        message: '"${g.name}" 모임과 선수 ${g.playerCount}명이 이 기기에서 삭제돼요.',
+      );
+      if (ok) await repo.deleteGroup(g.id);
+    }
+  }
+
+  Future<String?> _askName(String current) {
+    final controller = TextEditingController(text: current);
+    return showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('모임 이름'),
+        content: TextField(controller: controller, autofocus: true),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GroupCard extends StatelessWidget {
+  const _GroupCard({
+    required this.group,
+    required this.onTap,
+    required this.onLongPress,
+  });
+
+  final GroupInfo group;
+  final VoidCallback onTap;
+  final VoidCallback onLongPress;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final color = Color(group.color);
+    final used = group.lastUsedAt;
+    return SizedBox(
+      width: 210,
+      height: 140,
+      child: Card(
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: color.withValues(alpha: 0.6), width: 1.5),
+        ),
+        child: InkWell(
+          onTap: onTap,
+          onLongPress: onLongPress,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${group.icon} ${group.name}',
+                  style: theme.textTheme.titleMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const Spacer(),
+                Text('선수 ${group.playerCount}명'),
+                Text(
+                  '${group.role.label} · ${used.month}/${used.day}',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CreateGroupCard extends StatelessWidget {
+  const _CreateGroupCard({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return SizedBox(
+      width: 210,
+      height: 140,
+      child: Card.outlined(
+        clipBehavior: Clip.antiAlias,
+        child: InkWell(
+          onTap: onTap,
+          child: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add, size: 40, color: theme.colorScheme.primary),
+                const SizedBox(height: 8),
+                const Text('새 모임 만들기'),
+              ],
             ),
           ),
         ),

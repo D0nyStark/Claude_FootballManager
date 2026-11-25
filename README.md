@@ -14,7 +14,8 @@ lib/
     models/        # Player, PlayerStats, MatchFormat/Slot, Lineup, TeamConstraint
     scoring/       # 공격력·수비력 지표, 슬롯 정규화, 밸런스 점수(0~100), 자리 배치
     balancer/      # 자동 편성 엔진 (시뮬레이티드 어닐링, 후보 선정, 반복 조합 회피)
-  features/        # 화면 (모임 목록 등)
+  data/            # 기기 저장 (drift/SQLite), 저장소, Riverpod 공급자
+  features/        # 화면: 모임 목록, 생성 마법사, 모임 홈, 선수 관리, 설정
   app.dart, main.dart
 test/core/         # 엔진·점수 단위 테스트 (SPEC §6.8 품질 목표 포함)
 ```
@@ -23,6 +24,7 @@ test/core/         # 엔진·점수 단위 테스트 (SPEC §6.8 품질 목표 �
 
 ```bash
 flutter pub get
+dart run build_runner build   # DB 테이블을 바꿨을 때만 (app_database.g.dart 재생성)
 flutter analyze
 flutter test
 flutter run            # Android 기기/에뮬레이터
@@ -35,5 +37,5 @@ flutter build apk      # 데모 배포용 APK
 |---|---|
 | M0 셋업 (프로젝트, 가로 고정, CI) | ✅ |
 | M1 편성 엔진 + 테스트 | ✅ |
-| M2 모임·선수 관리 | ⏳ |
+| M2 모임·선수 관리 (모임 목록, 생성 마법사, 선수·제약, 기기 저장) | ✅ |
 | M3~M7 | ⏳ |
