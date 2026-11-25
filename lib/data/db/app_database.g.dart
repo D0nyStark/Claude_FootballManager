@@ -2617,6 +2617,276 @@ class DeviceSettingsCompanion extends UpdateCompanion<DeviceSettingRow> {
   }
 }
 
+class $SessionDraftsTable extends SessionDrafts
+    with TableInfo<$SessionDraftsTable, SessionDraftRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $SessionDraftsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES "groups" (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
+  @override
+  late final GeneratedColumn<String> json = GeneratedColumn<String>(
+    'json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [groupId, json, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'session_drafts';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<SessionDraftRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('json')) {
+      context.handle(
+        _jsonMeta,
+        json.isAcceptableOrUnknown(data['json']!, _jsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jsonMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {groupId};
+  @override
+  SessionDraftRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return SessionDraftRow(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      json: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}json'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $SessionDraftsTable createAlias(String alias) {
+    return $SessionDraftsTable(attachedDatabase, alias);
+  }
+}
+
+class SessionDraftRow extends DataClass implements Insertable<SessionDraftRow> {
+  final String groupId;
+  final String json;
+  final DateTime updatedAt;
+  const SessionDraftRow({
+    required this.groupId,
+    required this.json,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<String>(groupId);
+    map['json'] = Variable<String>(json);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  SessionDraftsCompanion toCompanion(bool nullToAbsent) {
+    return SessionDraftsCompanion(
+      groupId: Value(groupId),
+      json: Value(json),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory SessionDraftRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return SessionDraftRow(
+      groupId: serializer.fromJson<String>(json['groupId']),
+      json: serializer.fromJson<String>(json['json']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<String>(groupId),
+      'json': serializer.toJson<String>(json),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  SessionDraftRow copyWith({
+    String? groupId,
+    String? json,
+    DateTime? updatedAt,
+  }) => SessionDraftRow(
+    groupId: groupId ?? this.groupId,
+    json: json ?? this.json,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  SessionDraftRow copyWithCompanion(SessionDraftsCompanion data) {
+    return SessionDraftRow(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      json: data.json.present ? data.json.value : this.json,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SessionDraftRow(')
+          ..write('groupId: $groupId, ')
+          ..write('json: $json, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, json, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is SessionDraftRow &&
+          other.groupId == this.groupId &&
+          other.json == this.json &&
+          other.updatedAt == this.updatedAt);
+}
+
+class SessionDraftsCompanion extends UpdateCompanion<SessionDraftRow> {
+  final Value<String> groupId;
+  final Value<String> json;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const SessionDraftsCompanion({
+    this.groupId = const Value.absent(),
+    this.json = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  SessionDraftsCompanion.insert({
+    required String groupId,
+    required String json,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : groupId = Value(groupId),
+       json = Value(json),
+       updatedAt = Value(updatedAt);
+  static Insertable<SessionDraftRow> custom({
+    Expression<String>? groupId,
+    Expression<String>? json,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (json != null) 'json': json,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  SessionDraftsCompanion copyWith({
+    Value<String>? groupId,
+    Value<String>? json,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return SessionDraftsCompanion(
+      groupId: groupId ?? this.groupId,
+      json: json ?? this.json,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (json.present) {
+      map['json'] = Variable<String>(json.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('SessionDraftsCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('json: $json, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2625,6 +2895,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $PlayerConstraintsTable playerConstraints =
       $PlayerConstraintsTable(this);
   late final $DeviceSettingsTable deviceSettings = $DeviceSettingsTable(this);
+  late final $SessionDraftsTable sessionDrafts = $SessionDraftsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2634,6 +2905,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     players,
     playerConstraints,
     deviceSettings,
+    sessionDrafts,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -2650,6 +2922,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('player_constraints', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('session_drafts', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2722,6 +3001,24 @@ final class $$GroupsTableReferences
     final cache = $_typedResult.readTableOrNull(
       _playerConstraintsRefsTable($_db),
     );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$SessionDraftsTable, List<SessionDraftRow>>
+  _sessionDraftsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.sessionDrafts,
+    aliasName: 'groups__id__session_drafts__group_id',
+  );
+
+  $$SessionDraftsTableProcessedTableManager get sessionDraftsRefs {
+    final manager = $$SessionDraftsTableTableManager(
+      $_db,
+      $_db.sessionDrafts,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_sessionDraftsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -2835,6 +3132,31 @@ class $$GroupsTableFilterComposer
           }) => $$PlayerConstraintsTableFilterComposer(
             $db: $db,
             $table: $db.playerConstraints,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> sessionDraftsRefs(
+    Expression<bool> Function($$SessionDraftsTableFilterComposer f) f,
+  ) {
+    final $$SessionDraftsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessionDrafts,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionDraftsTableFilterComposer(
+            $db: $db,
+            $table: $db.sessionDrafts,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3011,6 +3333,31 @@ class $$GroupsTableAnnotationComposer
         );
     return f(composer);
   }
+
+  Expression<T> sessionDraftsRefs<T extends Object>(
+    Expression<T> Function($$SessionDraftsTableAnnotationComposer a) f,
+  ) {
+    final $$SessionDraftsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.sessionDrafts,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$SessionDraftsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.sessionDrafts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$GroupsTableTableManager
@@ -3026,7 +3373,11 @@ class $$GroupsTableTableManager
           $$GroupsTableUpdateCompanionBuilder,
           (GroupRow, $$GroupsTableReferences),
           GroupRow,
-          PrefetchHooks Function({bool playersRefs, bool playerConstraintsRefs})
+          PrefetchHooks Function({
+            bool playersRefs,
+            bool playerConstraintsRefs,
+            bool sessionDraftsRefs,
+          })
         > {
   $$GroupsTableTableManager(_$AppDatabase db, $GroupsTable table)
     : super(
@@ -3104,12 +3455,17 @@ class $$GroupsTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({playersRefs = false, playerConstraintsRefs = false}) {
+              ({
+                playersRefs = false,
+                playerConstraintsRefs = false,
+                sessionDraftsRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (playersRefs) db.players,
                     if (playerConstraintsRefs) db.playerConstraints,
+                    if (sessionDraftsRefs) db.sessionDrafts,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -3154,6 +3510,26 @@ class $$GroupsTableTableManager
                           referencedColumn: 'group_id',
                           typedResults: items,
                         ),
+                      if (sessionDraftsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          GroupRow,
+                          $GroupsTable,
+                          SessionDraftRow,
+                          $SessionDraftsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$GroupsTableReferences
+                              ._sessionDraftsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$GroupsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).sessionDraftsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'group_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3174,7 +3550,11 @@ typedef $$GroupsTableProcessedTableManager =
       $$GroupsTableUpdateCompanionBuilder,
       (GroupRow, $$GroupsTableReferences),
       GroupRow,
-      PrefetchHooks Function({bool playersRefs, bool playerConstraintsRefs})
+      PrefetchHooks Function({
+        bool playersRefs,
+        bool playerConstraintsRefs,
+        bool sessionDraftsRefs,
+      })
     >;
 typedef $$PlayersTableCreateCompanionBuilder = PlayersCompanion Function({
   required DateTime updatedAt,
@@ -4363,6 +4743,288 @@ typedef $$DeviceSettingsTableProcessedTableManager =
       DeviceSettingRow,
       PrefetchHooks Function()
     >;
+typedef $$SessionDraftsTableCreateCompanionBuilder =
+    SessionDraftsCompanion Function({
+      required String groupId,
+      required String json,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$SessionDraftsTableUpdateCompanionBuilder =
+    SessionDraftsCompanion Function({
+      Value<String> groupId,
+      Value<String> json,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$SessionDraftsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $SessionDraftsTable, SessionDraftRow> {
+  $$SessionDraftsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $GroupsTable _groupIdTable(_$AppDatabase db) =>
+      db.groups.createAlias('session_drafts__group_id__groups__id');
+
+  $$GroupsTableProcessedTableManager get groupId {
+    final $_column = $_itemColumn<String>('group_id')!;
+
+    final manager = $$GroupsTableTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$SessionDraftsTableFilterComposer
+    extends Composer<_$AppDatabase, $SessionDraftsTable> {
+  $$SessionDraftsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$GroupsTableFilterComposer get groupId {
+    final $$GroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionDraftsTableOrderingComposer
+    extends Composer<_$AppDatabase, $SessionDraftsTable> {
+  $$SessionDraftsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$GroupsTableOrderingComposer get groupId {
+    final $$GroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionDraftsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $SessionDraftsTable> {
+  $$SessionDraftsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get json =>
+      $composableBuilder(column: $table.json, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$GroupsTableAnnotationComposer get groupId {
+    final $$GroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$SessionDraftsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $SessionDraftsTable,
+          SessionDraftRow,
+          $$SessionDraftsTableFilterComposer,
+          $$SessionDraftsTableOrderingComposer,
+          $$SessionDraftsTableAnnotationComposer,
+          $$SessionDraftsTableCreateCompanionBuilder,
+          $$SessionDraftsTableUpdateCompanionBuilder,
+          (SessionDraftRow, $$SessionDraftsTableReferences),
+          SessionDraftRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $$SessionDraftsTableTableManager(_$AppDatabase db, $SessionDraftsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$SessionDraftsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$SessionDraftsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$SessionDraftsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> groupId = const Value.absent(),
+                Value<String> json = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => SessionDraftsCompanion(
+                groupId: groupId,
+                json: json,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String groupId,
+                required String json,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => SessionDraftsCompanion.insert(
+                groupId: groupId,
+                json: json,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$SessionDraftsTable, SessionDraftRow>(table),
+                  $$SessionDraftsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $$SessionDraftsTableReferences
+                            ._groupIdTable(db),
+                        referencedColumn: $$SessionDraftsTableReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$SessionDraftsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $SessionDraftsTable,
+      SessionDraftRow,
+      $$SessionDraftsTableFilterComposer,
+      $$SessionDraftsTableOrderingComposer,
+      $$SessionDraftsTableAnnotationComposer,
+      $$SessionDraftsTableCreateCompanionBuilder,
+      $$SessionDraftsTableUpdateCompanionBuilder,
+      (SessionDraftRow, $$SessionDraftsTableReferences),
+      SessionDraftRow,
+      PrefetchHooks Function({bool groupId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -4375,4 +5037,6 @@ class $AppDatabaseManager {
       $$PlayerConstraintsTableTableManager(_db, _db.playerConstraints);
   $$DeviceSettingsTableTableManager get deviceSettings =>
       $$DeviceSettingsTableTableManager(_db, _db.deviceSettings);
+  $$SessionDraftsTableTableManager get sessionDrafts =>
+      $$SessionDraftsTableTableManager(_db, _db.sessionDrafts);
 }

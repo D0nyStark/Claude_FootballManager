@@ -10,7 +10,9 @@ import 'tables.dart';
 
 part 'app_database.g.dart';
 
-@DriftDatabase(tables: [Groups, Players, PlayerConstraints, DeviceSettings])
+@DriftDatabase(
+  tables: [Groups, Players, PlayerConstraints, DeviceSettings, SessionDrafts],
+)
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
@@ -19,10 +21,13 @@ class AppDatabase extends _$AppDatabase {
       AppDatabase(driftDatabase(name: 'futsal_team_maker'));
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+    onUpgrade: (m, from, to) async {
+      if (from < 2) await m.createTable(sessionDrafts);
+    },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');
     },

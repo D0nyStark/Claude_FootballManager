@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../core/models/formation.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
+import '../match/deck_page.dart';
 import '../onboarding/onboarding_page.dart';
 
 /// 모임 홈: 오늘 매치 형식 선택 (SPEC F0, §8.2-1).
@@ -103,12 +104,10 @@ class GroupHomeView extends ConsumerWidget {
     );
   }
 
-  void _startMatch(BuildContext context, MatchFormat format) {
-    // 출전 덱 화면은 M3에서 구현.
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(content: Text('${format.label} 출전 덱 화면은 준비 중이에요.')),
+  void _startMatch(BuildContext context, MatchFormat format) =>
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => DeckPage(group: group, format: format),
+        ),
       );
-  }
 }

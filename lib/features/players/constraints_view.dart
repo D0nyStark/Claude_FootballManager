@@ -66,7 +66,7 @@ class ConstraintsView extends ConsumerWidget {
   Future<void> _add(BuildContext context, WidgetRef ref) async {
     final result = await showDialog<(ConstraintType, Set<String>)>(
       context: context,
-      builder: (_) => _ConstraintDialog(players: players),
+      builder: (_) => ConstraintDialog(players: players),
     );
     if (result == null) return;
     await ref
@@ -75,16 +75,17 @@ class ConstraintsView extends ConsumerWidget {
   }
 }
 
-class _ConstraintDialog extends StatefulWidget {
-  const _ConstraintDialog({required this.players});
+/// 제약 추가 창: 종류 + 선수 2명 이상 (상시 제약·당일 제약 공용).
+class ConstraintDialog extends StatefulWidget {
+  const ConstraintDialog({super.key, required this.players});
 
   final List<Player> players;
 
   @override
-  State<_ConstraintDialog> createState() => _ConstraintDialogState();
+  State<ConstraintDialog> createState() => _ConstraintDialogState();
 }
 
-class _ConstraintDialogState extends State<_ConstraintDialog> {
+class _ConstraintDialogState extends State<ConstraintDialog> {
   ConstraintType _type = ConstraintType.together;
   final Set<String> _selected = {};
 

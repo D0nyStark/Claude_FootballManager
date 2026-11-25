@@ -155,6 +155,9 @@ class GroupRepository {
   /// 이 기기에서 모임 삭제(모임 나가기). 선수·제약도 함께 지워진다.
   Future<void> deleteGroup(String id) => _db.transaction(() async {
     await (_db.delete(
+      _db.sessionDrafts,
+    )..where((d) => d.groupId.equals(id))).go();
+    await (_db.delete(
       _db.playerConstraints,
     )..where((c) => c.groupId.equals(id))).go();
     await (_db.delete(_db.players)..where((p) => p.groupId.equals(id))).go();

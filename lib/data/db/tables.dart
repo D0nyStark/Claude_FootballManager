@@ -91,3 +91,15 @@ class DeviceSettings extends Table {
   @override
   Set<Column> get primaryKey => {key};
 }
+
+/// 진행 중인 매치 준비 상태 (모임별 1행, JSON). 공유되지 않는다.
+@DataClassName('SessionDraftRow')
+class SessionDrafts extends Table {
+  TextColumn get groupId =>
+      text().references(Groups, #id, onDelete: KeyAction.cascade)();
+  TextColumn get json => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {groupId};
+}

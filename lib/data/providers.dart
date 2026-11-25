@@ -1,10 +1,15 @@
+import 'dart:isolate';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../core/balancer/balancer.dart';
 
 import '../core/models/player.dart';
 import '../core/models/team_constraint.dart';
 import 'db/app_database.dart';
 import 'repositories/group_repository.dart';
 import 'repositories/player_repository.dart';
+import 'repositories/session_repository.dart';
 
 /// main()에서 연 데이터베이스로 덮어쓴다.
 final databaseProvider = Provider<AppDatabase>(
@@ -43,3 +48,15 @@ final constraintsProvider = StreamProvider.family<List<TeamConstraint>, String>(
   (ref, groupId) =>
       ref.watch(playerRepositoryProvider).watchConstraints(groupId),
 );
+
+final sessionRepositoryProvider = Provider(
+  (ref) => SessionRepository(ref.watch(databaseProvider)),
+);
+
+/// 자동 편성 실행기. 화면이 멈추지 않도록 별도 isolate에서 계산한다.
+/// 테스트에서는 같은 isolate에서 바로 계산하도록 덮어쓴다.
+final balancerRunnerProvider =
+    Provider<Future<BalanceResult> Function(BalanceRequest)>(
+      (ref) =>
+          (request) => Isolate.run(() => const TeamBalancer().balance(request)),
+    );

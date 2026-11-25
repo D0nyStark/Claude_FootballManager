@@ -5,6 +5,7 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futsalteammaker/app.dart';
+import 'package:futsalteammaker/core/balancer/balancer.dart';
 import 'package:futsalteammaker/data/db/app_database.dart';
 import 'package:futsalteammaker/data/providers.dart';
 import 'package:material_ui/material_ui.dart';
@@ -30,6 +31,10 @@ Future<AppDatabase> pumpApp(
       overrides: [
         databaseProvider.overrideWithValue(database),
         deviceIdProvider.overrideWithValue('test-device'),
+        // 테스트에서는 isolate 없이 바로 계산 (가짜 시간과 충돌 방지).
+        balancerRunnerProvider.overrideWithValue(
+          (request) async => const TeamBalancer().balance(request),
+        ),
       ],
       child: home == null
           ? const FutsalTeamMakerApp(autoEnterSingleGroup: false)
