@@ -279,28 +279,45 @@ void main() {
       expect(r.best.lineup.teams[0].slots[Slot.pivo], deck[0].id);
     });
 
-    test('지킬 수 없는 "다른 팀" 제약은 실패와 원인을 알려준다', () {
+    // 충돌하는 조건은 알림 없이 최대한 지킨 편성을 낸다.
+    void expectValidLineup(BalanceSuccess r, List<Player> deck) {
+      final l = r.best.lineup;
+      final ids = [for (final t in l.teams) ...t.playerIds];
+      expect(ids.toSet(), {for (final p in deck) p.id});
+      expect(ids.length, deck.length);
+      final sizes = [for (final t in l.teams) t.size];
+      expect(
+        sizes.reduce(math.max) - sizes.reduce(math.min),
+        lessThanOrEqualTo(1),
+      );
+    }
+
+    test('지킬 수 없는 "다른 팀" 제약: 실패 없이 최대한 지킨다', () {
       final deck = randomDeck(math.Random(6), 12);
-      final r = balancer.balance(
+      final apart = TeamConstraint(
+        type: ConstraintType.apart,
+        playerIds: {deck[0].id, deck[1].id, deck[2].id},
+      );
+      final r = run(
         BalanceRequest(
           players: deck,
           format: MatchFormat.sixVsSix,
-          constraints: [
-            TeamConstraint(
-              type: ConstraintType.apart,
-              playerIds: {deck[0].id, deck[1].id, deck[2].id},
-            ),
-          ],
+          constraints: [apart],
         ),
       );
-      expect(r, isA<BalanceFailure>());
-      expect((r as BalanceFailure).issues.first.constraint, isNotNull);
+      expectValidLineup(r, deck);
+      // 3명을 2팀에 나누면 최소 한 쌍은 같은 팀 — 정확히 한 쌍만 겹친다.
+      final teams = {
+        for (final id in apart.playerIds) r.best.lineup.teamOf(id),
+      };
+      expect(teams.length, 2);
+      expect(r.best.unmetConstraints, [apart]);
     });
 
-    test('같은 팀과 다른 팀이 충돌하면 실패', () {
+    test('같은 팀과 다른 팀이 충돌하면 "같은 팀"을 따른다', () {
       final deck = randomDeck(math.Random(8), 10);
       final pair = {deck[0].id, deck[1].id};
-      final r = balancer.balance(
+      final r = run(
         BalanceRequest(
           players: deck,
           format: MatchFormat.fiveVsFive,
@@ -310,12 +327,16 @@ void main() {
           ],
         ),
       );
-      expect(r, isA<BalanceFailure>());
+      expectValidLineup(r, deck);
+      expect(
+        r.best.lineup.teamOf(deck[0].id),
+        r.best.lineup.teamOf(deck[1].id),
+      );
     });
 
-    test('묶음이 팀 정원보다 크면 실패', () {
+    test('묶음이 팀 정원보다 크면 묶음을 풀어 편성한다', () {
       final deck = randomDeck(math.Random(9), 10);
-      final r = balancer.balance(
+      final r = run(
         BalanceRequest(
           players: deck,
           format: MatchFormat.fiveVsFive,
@@ -327,10 +348,64 @@ void main() {
           ],
         ),
       );
-      expect(r, isA<BalanceFailure>());
+      expectValidLineup(r, deck);
     });
 
-    test('팀 수가 범위를 벗어나면 실패', () {
+    test('한 팀에 정원보다 많이 고정해도 편성한다', () {
+      final deck = randomDeck(math.Random(13), 12);
+      final r = run(
+        BalanceRequest(
+          players: deck,
+          format: MatchFormat.sixVsSix,
+          pinnedTeams: {for (final p in deck.take(8)) p.id: 0},
+        ),
+      );
+      expectValidLineup(r, deck);
+    });
+
+    test('묶음끼리 정원에 나눠 담을 수 없으면 일부 묶음을 푼다', () {
+      // 10명·2팀(5·5)에 4명 묶음 2개 + 2명 묶음 1개 → 그대로는 담을 수 없음.
+      final deck = randomDeck(math.Random(14), 10);
+      final ids = [for (final p in deck) p.id];
+      final r = run(
+        BalanceRequest(
+          players: deck,
+          format: MatchFormat.fiveVsFive,
+          constraints: [
+            TeamConstraint(
+              type: ConstraintType.together,
+              playerIds: ids.sublist(0, 4).toSet(),
+            ),
+            TeamConstraint(
+              type: ConstraintType.together,
+              playerIds: ids.sublist(4, 8).toSet(),
+            ),
+            TeamConstraint(
+              type: ConstraintType.together,
+              playerIds: ids.sublist(8, 10).toSet(),
+            ),
+          ],
+        ),
+      );
+      expectValidLineup(r, deck);
+    });
+
+    test('잘못된 키퍼 지정(덱에 없는 선수)은 무시한다', () {
+      final deck = randomDeck(math.Random(15), 10);
+      final r = run(
+        BalanceRequest(
+          players: deck,
+          format: MatchFormat.fiveVsFive,
+          keeperMode: KeeperMode.fixed,
+          fixedKeepers: {0: 'nobody', 1: deck[0].id},
+        ),
+      );
+      expectValidLineup(r, deck);
+      expect(r.best.lineup.teams[1].slots[Slot.gk], deck[0].id);
+    });
+
+    // 화면에서 2~4팀만 고를 수 있으므로 사용자에게는 나타나지 않는 경우.
+    test('팀 수가 범위를 벗어나면 실패 (잘못된 입력)', () {
       final deck = randomDeck(math.Random(10), 10);
       expect(
         balancer.balance(

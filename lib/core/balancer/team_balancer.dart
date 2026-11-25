@@ -59,11 +59,6 @@ class TeamBalancer {
     for (var r = 0; r < request.restarts; r++) {
       final rng = math.Random(request.seed * 7919 + r);
       final initial = ctx.initialState(rng, noise: r == 0 ? 0 : 0.35);
-      if (initial == null) {
-        return const BalanceFailure([
-          BalanceIssue('같은 팀으로 묶인 인원이 팀 정원보다 많아 편성할 수 없어요.'),
-        ]);
-      }
       final best = ctx.anneal(initial, rng, request.iterations, repWeight);
       for (final s in best) {
         addCandidate(s);
@@ -75,7 +70,7 @@ class TeamBalancer {
       final pureRuns = math.max(2, request.restarts ~/ 3);
       for (var r = 0; r < pureRuns; r++) {
         final rng = math.Random(request.seed * 104729 + r + 1);
-        final initial = ctx.initialState(rng, noise: r == 0 ? 0 : 0.35)!;
+        final initial = ctx.initialState(rng, noise: r == 0 ? 0 : 0.35);
         final best = ctx.anneal(initial, rng, request.iterations, 0);
         for (final s in best) {
           bestPure = math.max(bestPure, ctx.realize(s, 0).balance.total);
@@ -83,19 +78,9 @@ class TeamBalancer {
       }
     }
 
-    // 제약 위반이 없는 후보만.
-    final valid = found.where((c) => c.violations.isEmpty).toList();
-    if (valid.isEmpty) {
-      final violated = {for (final c in found) ...c.violations}.toList();
-      return BalanceFailure([
-        for (final c in violated)
-          BalanceIssue(
-            '"다른 팀" 제약을 모두 지킬 수 없어요: '
-            '${c.playerIds.map(ctx.nameOf).join(', ')}',
-            constraint: c,
-          ),
-      ]);
-    }
+    // 제약을 가장 많이 지킨 후보만 남긴다. 모두 지킬 수 없으면 알림 없이 최대한 지킨 편성을 쓴다.
+    final fewest = found.map((c) => c.violations.length).reduce(math.min);
+    final valid = found.where((c) => c.violations.length == fewest).toList();
 
     // 밸런스 보호 → 비용 순 정렬 → 서로 충분히 다른 편성안 선택.
     var pool = valid;
@@ -139,6 +124,7 @@ class TeamBalancer {
           balance: c.balance,
           repetitionPenalty: c.repetition,
           repeatedPairs: c.repeatedPairs,
+          unmetConstraints: c.violations,
         ),
     ]);
   }
@@ -198,9 +184,9 @@ class _Context {
   late final List<double> deckMean; // [Metric.index]
   late final List<int> fixedKeeperOfTeam; // -1 없음
   late final List<bool> isFixedKeeper;
-  late final List<List<int>> units;
-  late final List<int> unitPinnedTeam;
-  late final List<int> movableUnits;
+  late List<List<int>> units;
+  late List<int> unitPinnedTeam;
+  late List<int> movableUnits;
   late final List<int> targetSizes;
   late final List<List<int>> apartPairs; // [i, j, constraintIndex]
   late final List<TeamConstraint> apartConstraints;
@@ -208,11 +194,6 @@ class _Context {
   late final Map<int, Slot> pinnedSlot;
   late final Set<String> previousBench;
   late final RepetitionModel repetition;
-
-  String nameOf(String id) =>
-      players.firstWhere((p) => p.id == id, orElse: () => _unknown(id)).name;
-
-  static Player _unknown(String id) => throw StateError(id);
 
   static _Context build(
     BalanceRequest req,
@@ -274,17 +255,11 @@ class _Context {
     isFixedKeeper = List.filled(n, false);
     if (request.keeperMode == KeeperMode.fixed) {
       request.fixedKeepers.forEach((team, id) {
+        // 잘못된 지정(덱에 없음, 팀 번호 오류, 중복)은 조용히 무시한다.
         final i = index[id];
-        if (team < 0 || team >= k) {
-          issues.add(BalanceIssue('키퍼 지정 팀 번호가 잘못됐어요: ${team + 1}팀'));
-        } else if (i == null) {
-          issues.add(BalanceIssue('지정한 키퍼가 출전 덱에 없어요: $id'));
-        } else if (isFixedKeeper[i]) {
-          issues.add(BalanceIssue('${players[i].name} 선수가 두 팀의 키퍼로 지정됐어요.'));
-        } else {
-          fixedKeeperOfTeam[team] = i;
-          isFixedKeeper[i] = true;
-        }
+        if (team < 0 || team >= k || i == null || isFixedKeeper[i]) return;
+        fixedKeeperOfTeam[team] = i;
+        isFixedKeeper[i] = true;
       });
     }
 
@@ -306,11 +281,7 @@ class _Context {
     pinnedSlot = {};
     request.pinnedTeams.forEach((id, team) {
       final i = index[id];
-      if (i == null) return;
-      if (team < 0 || team >= k) {
-        issues.add(BalanceIssue('고정 팀 번호가 잘못됐어요: ${players[i].name}'));
-        return;
-      }
+      if (i == null || team < 0 || team >= k) return;
       pinTeam[i] = team;
       pinnedPlayers.add(i);
       final slot = request.pinnedSlots[id];
@@ -321,10 +292,7 @@ class _Context {
     for (var t = 0; t < k; t++) {
       final i = fixedKeeperOfTeam[t];
       if (i < 0) continue;
-      if (pinTeam[i] >= 0 && pinTeam[i] != t) {
-        issues.add(BalanceIssue('${players[i].name} 선수의 고정 팀과 키퍼 팀이 달라요.'));
-      }
-      pinTeam[i] = t;
+      pinTeam[i] = t; // 키퍼 고정이 선수 고정보다 우선.
       pinnedSlot[i] = Slot.gk;
     }
 
@@ -353,23 +321,15 @@ class _Context {
     units = groups.values.toList();
     unitPinnedTeam = [];
     for (final u in units) {
-      final teams = {
-        for (final i in u)
-          if (pinTeam[i] >= 0) pinTeam[i],
-      };
-      if (teams.length > 1) {
-        issues.add(
-          BalanceIssue(
-            '같은 팀으로 묶인 ${u.map((i) => players[i].name).join(', ')} 선수의 고정 팀이 서로 달라요.',
-          ),
-        );
-      }
-      unitPinnedTeam.add(teams.isEmpty ? -1 : teams.first);
+      // 묶음 안의 고정 팀이 서로 다르면 고정 키퍼 → 먼저 나온 고정 순으로 하나만 따른다.
+      final keeper = u.where((i) => isFixedKeeper[i]);
+      final pinned = u.where((i) => pinTeam[i] >= 0);
+      unitPinnedTeam.add(
+        keeper.isNotEmpty
+            ? pinTeam[keeper.first]
+            : (pinned.isNotEmpty ? pinTeam[pinned.first] : -1),
+      );
     }
-    movableUnits = [
-      for (var u = 0; u < units.length; u++)
-        if (unitPinnedTeam[u] < 0) u,
-    ];
 
     // "다른 팀" 제약 → 쌍 목록. 같은 묶음 안에 있으면 불가능.
     apartConstraints = apart;
@@ -381,52 +341,137 @@ class _Context {
       ];
       for (var a = 0; a < members.length; a++) {
         for (var b = a + 1; b < members.length; b++) {
-          if (find(members[a]) == find(members[b])) {
-            issues.add(
-              BalanceIssue(
-                '${players[members[a]].name}, ${players[members[b]].name} 선수에게 '
-                '"같은 팀"과 "다른 팀" 제약이 함께 걸려 있어요.',
-                constraint: apart[c],
-              ),
-            );
-          }
+          // "같은 팀"과 "다른 팀"이 함께 걸린 쌍은 "같은 팀"을 따른다.
+          if (find(members[a]) == find(members[b])) continue;
           apartPairs.add([members[a], members[b], c]);
         }
       }
     }
 
     targetSizes = distributeTeamSizes(n, k);
-    final maxUnit = units.map((u) => u.length).fold(0, math.max);
-    if (maxUnit > targetSizes.first) {
-      issues.add(
-        BalanceIssue('같은 팀으로 묶인 $maxUnit명이 팀 정원(${targetSizes.first}명)보다 많아요.'),
-      );
+    _repairFeasibility();
+  }
+
+  /// 팀 정원 안에 들어가지 않는 고정·묶음을 조용히 풀어 항상 편성할 수 있게 한다.
+  /// 1) 한 팀에 고정된 인원이 정원보다 많으면 키퍼가 아닌 고정 묶음부터 고정 해제
+  /// 2) 묶음을 팀 정원에 나눠 담을 수 없으면 가장 큰 묶음부터 개인으로 분리
+  void _repairFeasibility() {
+    while (true) {
+      final pinnedCount = _pinnedCounts();
+      final order = _teamsByPinned(pinnedCount);
+      final over = [
+        for (var r = 0; r < k; r++)
+          if (pinnedCount[order[r]] > targetSizes[r]) order[r],
+      ];
+      if (over.isEmpty) break;
+      final t = over.first;
+      final candidates =
+          [
+            for (var u = 0; u < units.length; u++)
+              if (unitPinnedTeam[u] == t) u,
+          ]..sort((a, b) {
+            final ka = units[a].any((i) => isFixedKeeper[i]) ? 1 : 0;
+            final kb = units[b].any((i) => isFixedKeeper[i]) ? 1 : 0;
+            return ka != kb ? ka - kb : units[b].length - units[a].length;
+          });
+      final u = candidates.first;
+      if (units[u].any((i) => isFixedKeeper[i]) && units[u].length > 1) {
+        _split(u); // 키퍼 묶음은 키퍼만 남기고 분리
+      } else {
+        unitPinnedTeam[u] = -1;
+        for (final i in units[u]) {
+          pinnedPlayers.remove(i);
+          pinnedSlot.remove(i);
+        }
+      }
     }
+    while (!_packable()) {
+      final blocks = [
+        for (var u = 0; u < units.length; u++)
+          if (units[u].length > 1) u,
+      ]..sort((a, b) => units[b].length.compareTo(units[a].length));
+      if (blocks.isEmpty) break;
+      _split(blocks.first);
+    }
+    movableUnits = [
+      for (var u = 0; u < units.length; u++)
+        if (unitPinnedTeam[u] < 0) u,
+    ];
+  }
+
+  /// 묶음을 개인 단위로 분리. 고정 키퍼만 팀 고정을 유지한다.
+  void _split(int u) {
+    final members = units[u];
+    final team = unitPinnedTeam[u];
+    units.removeAt(u);
+    unitPinnedTeam.removeAt(u);
+    for (final i in members) {
+      final keep = isFixedKeeper[i];
+      units.add([i]);
+      unitPinnedTeam.add(keep ? team : -1);
+      if (!keep) {
+        pinnedPlayers.remove(i);
+        pinnedSlot.remove(i);
+      }
+    }
+  }
+
+  List<int> _pinnedCounts() {
+    final count = List.filled(k, 0);
+    for (var u = 0; u < units.length; u++) {
+      if (unitPinnedTeam[u] >= 0) count[unitPinnedTeam[u]] += units[u].length;
+    }
+    return count;
+  }
+
+  List<int> _teamsByPinned(List<int> pinnedCount) =>
+      List.generate(k, (t) => t)..sort((a, b) {
+        final c = pinnedCount[b].compareTo(pinnedCount[a]);
+        return c != 0 ? c : a.compareTo(b);
+      });
+
+  /// 팀별 정원: 고정 인원이 많은 팀에 큰 정원.
+  List<int> _capacities() {
+    final order = _teamsByPinned(_pinnedCounts());
+    final capacity = List.filled(k, 0);
+    for (var r = 0; r < k; r++) {
+      capacity[order[r]] = targetSizes[r];
+    }
+    return capacity;
+  }
+
+  /// 고정 인원 + 묶음(큰 것부터 First-Fit)을 정원 안에 담을 수 있는지.
+  bool _packable() {
+    final capacity = _capacities();
+    final count = _pinnedCounts();
+    final blocks = [
+      for (var u = 0; u < units.length; u++)
+        if (unitPinnedTeam[u] < 0 && units[u].length > 1) units[u].length,
+    ]..sort((a, b) => b - a);
+    for (final size in blocks) {
+      var best = -1;
+      for (var t = 0; t < k; t++) {
+        if (count[t] + size > capacity[t]) continue;
+        if (best < 0 || capacity[t] - count[t] > capacity[best] - count[best]) {
+          best = t;
+        }
+      }
+      if (best < 0) return false;
+      count[best] += size;
+    }
+    return true;
   }
 
   // ───────────────────────── 초기해 ─────────────────────────
 
   /// 고정 → 묶음(큰 것부터) → 개인(OVR 스네이크 드래프트) 순서로 배치.
   /// [noise]는 재시작마다 다른 출발점을 만들기 위한 정렬 흔들기.
-  List<int>? initialState(math.Random rng, {double noise = 0}) {
+  List<int> initialState(math.Random rng, {double noise = 0}) {
     final state = List.filled(units.length, -1);
     final count = List.filled(k, 0);
-    final strength = List.filled(k, 0.0);
     final teamOfPlayer = List.filled(n, -1);
 
-    // 팀별 정원: 고정 인원이 많은 팀에 큰 정원.
-    final pinnedCount = List.filled(k, 0);
-    for (var u = 0; u < units.length; u++) {
-      if (unitPinnedTeam[u] >= 0) {
-        pinnedCount[unitPinnedTeam[u]] += units[u].length;
-      }
-    }
-    final order = List.generate(k, (t) => t)
-      ..sort((a, b) => pinnedCount[b].compareTo(pinnedCount[a]));
-    final capacity = List.filled(k, 0);
-    for (var r = 0; r < k; r++) {
-      capacity[order[r]] = targetSizes[r];
-    }
+    final capacity = _capacities();
 
     int apartHits(int u, int t) {
       var hits = 0;
@@ -444,36 +489,35 @@ class _Context {
       count[t] += units[u].length;
       for (final i in units[u]) {
         teamOfPlayer[i] = t;
-        strength[t] += metric[Metric.strength.index][i];
       }
     }
 
     for (var u = 0; u < units.length; u++) {
       final t = unitPinnedTeam[u];
       if (t < 0) continue;
-      if (count[t] + units[u].length > capacity[t]) return null;
-      place(u, t);
+      place(u, t); // _repairFeasibility()가 정원 안에 들어감을 보장
     }
 
+    // 묶음: 남은 자리가 가장 많은 팀부터 (_packable()과 같은 규칙).
     final blocks = [
       for (final u in movableUnits)
         if (units[u].length > 1) u,
     ]..sort((a, b) => units[b].length.compareTo(units[a].length));
     for (final u in blocks) {
-      int? bestTeam;
+      var bestTeam = -1;
       for (var t = 0; t < k; t++) {
         if (count[t] + units[u].length > capacity[t]) continue;
-        if (bestTeam == null) {
+        if (bestTeam < 0) {
           bestTeam = t;
           continue;
         }
-        final cmp =
-            apartHits(u, t).compareTo(apartHits(u, bestTeam)) * 1000 +
-            (strength[t] - strength[bestTeam]).sign.toInt();
-        if (cmp < 0) bestTeam = t;
+        final hits = apartHits(u, t).compareTo(apartHits(u, bestTeam));
+        final room = (capacity[bestTeam] - count[bestTeam]).compareTo(
+          capacity[t] - count[t],
+        );
+        if (hits < 0 || (hits == 0 && room > 0)) bestTeam = t;
       }
-      if (bestTeam == null) return null;
-      place(u, bestTeam);
+      place(u, bestTeam < 0 ? _mostRoom(capacity, count) : bestTeam);
     }
 
     final singles = [
@@ -505,10 +549,17 @@ class _Context {
         }
         chosen ??= t;
       }
-      if (chosen == null) return null;
-      place(u, chosen);
+      place(u, chosen ?? _mostRoom(capacity, count));
     }
     return state;
+  }
+
+  int _mostRoom(List<int> capacity, List<int> count) {
+    var best = 0;
+    for (var t = 1; t < k; t++) {
+      if (capacity[t] - count[t] > capacity[best] - count[best]) best = t;
+    }
+    return best;
   }
 
   // ───────────────────────── 근사 비용 ─────────────────────────
