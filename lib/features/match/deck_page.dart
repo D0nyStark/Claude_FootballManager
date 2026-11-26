@@ -233,76 +233,82 @@ class _DeckPageState extends ConsumerState<DeckPage> {
       for (final pos in Position.values)
         pos: deck.where((p) => p.mainPosition == pos).length,
     };
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('출전 ${deck.length}명', style: theme.textTheme.titleMedium),
-              Text(
-                [
-                  for (final pos in Position.values)
-                    '${pos.label} ${counts[pos]}',
-                ].join(' · '),
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
+    final summary = Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('출전 ${deck.length}명', style: theme.textTheme.titleMedium),
+          Text(
+            [for (final pos in Position.values) '${pos.label} ${counts[pos]}']
+                .join(' · '),
+            style: theme.textTheme.bodySmall,
           ),
-        ),
-        Expanded(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Wrap(
-              spacing: 4,
-              runSpacing: 4,
-              children: [
-                for (final p in deck)
-                  InputChip(
-                    visualDensity: VisualDensity.compact,
-                    label: Text(p.isGuest ? '${p.name} (게스트)' : p.name),
-                    onDeleted: () =>
-                        p.isGuest ? c.removeGuest(p.id) : c.toggle(p.id),
-                  ),
-              ],
+        ],
+      ),
+    );
+    final chips = SingleChildScrollView(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Wrap(
+        spacing: 4,
+        runSpacing: 4,
+        children: [
+          for (final p in deck)
+            InputChip(
+              visualDensity: VisualDensity.compact,
+              label: Text(p.isGuest ? '${p.name} (게스트)' : p.name),
+              onDeleted: () => p.isGuest ? c.removeGuest(p.id) : c.toggle(p.id),
+            ),
+        ],
+      ),
+    );
+    final actions = Padding(
+      padding: const EdgeInsets.all(10),
+      child: Row(
+        children: [
+          CoachTarget(
+            id: 'deck.guest',
+            child: OutlinedButton.icon(
+              onPressed: () => _addGuest(c, registered),
+              icon: const Icon(Icons.person_add_alt),
+              label: const Text('게스트'),
             ),
           ),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            children: [
-              CoachTarget(
-                id: 'deck.guest',
-                child: OutlinedButton.icon(
-                  onPressed: () => _addGuest(c, registered),
-                  icon: const Icon(Icons.person_add_alt),
-                  label: const Text('게스트'),
-                ),
-              ),
-              const Spacer(),
-              CoachTarget(
-                id: 'deck.next',
-                child: FilledButton(
-                  onPressed: deck.length < MatchSession.minTeams
-                      ? null
-                      : () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => TeamSetupPage(
-                              group: widget.group,
-                              controller: c,
-                            ),
-                          ),
-                        ),
-                  child: const Text('다음 →'),
-                ),
-              ),
-            ],
+          const Spacer(),
+          CoachTarget(
+            id: 'deck.next',
+            child: FilledButton(
+              onPressed: deck.length < MatchSession.minTeams
+                  ? null
+                  : () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) =>
+                            TeamSetupPage(group: widget.group, controller: c),
+                      ),
+                    ),
+              child: const Text('다음 →'),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
+    );
+    // 키보드(검색·게스트 입력)가 올라와 높이가 모자라면 칩 목록은 숨긴다.
+    return LayoutBuilder(
+      builder: (context, constraints) => constraints.maxHeight < 200
+          ? SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [summary, actions],
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                summary,
+                Expanded(child: chips),
+                actions,
+              ],
+            ),
     );
   }
 
@@ -347,73 +353,125 @@ class _GuestDialogState extends State<_GuestDialog> {
     super.dispose();
   }
 
+  void _submit() {
+    final name = _name.text.trim();
+    if (name.isEmpty) return;
+    Navigator.pop(context, (
+      player: Player(
+        id: _save
+            ? PlayerRepository.newId()
+            : 'guest-${PlayerRepository.newId()}',
+        name: name,
+        stats: PlayerStats.uniform(_score),
+        mainPosition: _position,
+        isGuest: !_save,
+        statsSimple: true,
+      ),
+      save: _save,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('게스트 추가'),
-      content: SingleChildScrollView(
+    final theme = Theme.of(context);
+    // 가로 폰에서 키보드가 올라오면 남는 높이가 아주 적다:
+    // 버튼은 제목 줄에 두고, 입력 항목은 두 줄로 압축하고, 나머지는 스크롤.
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 640),
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            TextField(
-              key: const Key('guestName'),
-              controller: _name,
-              autofocus: true,
-              decoration: const InputDecoration(labelText: '이름'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 6, 8, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text('게스트 추가', style: theme.textTheme.titleMedium),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('취소'),
+                  ),
+                  const SizedBox(width: 4),
+                  FilledButton(onPressed: _submit, child: const Text('추가')),
+                ],
+              ),
             ),
-            const SizedBox(height: 12),
-            const Text('종합 점수'),
-            const SizedBox(height: 4),
-            ScorePicker(
-              value: _score,
-              onChanged: (v) => setState(() => _score = v),
-            ),
-            const SizedBox(height: 12),
-            SegmentedButton<Position>(
-              segments: [
-                for (final p in Position.values)
-                  ButtonSegment(value: p, label: Text(p.label)),
-              ],
-              selected: {_position},
-              onSelectionChanged: (s) => setState(() => _position = s.first),
-            ),
-            CheckboxListTile(
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: const Text('선수로 저장 (일반멤버로 등록)'),
-              value: _save,
-              onChanged: (v) => setState(() => _save = v ?? false),
+            Flexible(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 10),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            key: const Key('guestName'),
+                            controller: _name,
+                            autofocus: true,
+                            textInputAction: TextInputAction.done,
+                            onSubmitted: (_) => _submit(),
+                            decoration: const InputDecoration(
+                              labelText: '이름',
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        SegmentedButton<Position>(
+                          showSelectedIcon: false,
+                          segments: [
+                            for (final p in Position.values)
+                              ButtonSegment(value: p, label: Text(p.label)),
+                          ],
+                          selected: {_position},
+                          onSelectionChanged: (s) =>
+                              setState(() => _position = s.first),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        const Text('종합 점수'),
+                        ScorePicker(
+                          size: 30,
+                          value: _score,
+                          onChanged: (v) => setState(() => _score = v),
+                        ),
+                        const SizedBox(width: 4),
+                        InkWell(
+                          onTap: () => setState(() => _save = !_save),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Checkbox(
+                                value: _save,
+                                onChanged: (v) =>
+                                    setState(() => _save = v ?? false),
+                              ),
+                              const Text('선수로 저장 (일반멤버)'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
-        FilledButton(
-          onPressed: () {
-            final name = _name.text.trim();
-            if (name.isEmpty) return;
-            Navigator.pop(context, (
-              player: Player(
-                id: _save
-                    ? PlayerRepository.newId()
-                    : 'guest-${PlayerRepository.newId()}',
-                name: name,
-                stats: PlayerStats.uniform(_score),
-                mainPosition: _position,
-                isGuest: !_save,
-                statsSimple: true,
-              ),
-              save: _save,
-            ));
-          },
-          child: const Text('추가'),
-        ),
-      ],
     );
   }
 }

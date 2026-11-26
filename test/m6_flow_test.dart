@@ -30,14 +30,16 @@ void main() {
       ),
     );
     expect(preview.data, contains('수요풋살 6vs6 — 13명 / 2팀 (밸런스'));
-    expect(preview.data!.split('\n'), hasLength(3)); // 머리말 + 팀 2줄
-    expect(preview.data, contains('🔴 레드: '));
+    // 머리말 · 빈 줄 · 팀 이름 · 구분선 · 선발 6줄 · 후보 구분 · 후보 1줄
+    expect(preview.data!.split('\n'), hasLength(12));
+    expect(preview.data, contains('🔴 레드'));
+    expect(preview.data, isNot(contains('픽소')));
     expect(preview.data, isNot(contains('OVR')));
 
     // 팀별 OVR 포함 켜고 복사
     await tapAndSettle(tester, find.text('팀별 OVR 포함'));
     await tapAndSettle(tester, find.byKey(const Key('copyText')));
-    expect(fakeShare.texts.single, contains('(OVR '));
+    expect(fakeShare.texts.single, contains('OVR '));
     expect(find.textContaining('복사했어요'), findsOneWidget);
 
     // 확정 버튼은 "다시 공유"로 바뀐다.

@@ -209,10 +209,22 @@ void main() {
       date: DateTime(2026, 11, 25),
       balanceScore: 92,
     );
-    expect(text.split('\n'), [
-      '⚽ 11/25(수) 풋살 6vs6 — 12명 / 2팀 (밸런스 92)',
-      '🔴 레드: 🔄선수a | 픽소 선수b·선수c | 아라 선수d·선수e | 피보 선수f | 후보 선수g',
-      '🔵 블루: 🔄선수h | 픽소 선수i | 아라 선수j·선수k | 피보 선수l',
-    ]);
+    final lines = text.split('\n');
+    expect(lines.first, '⚽ 11/25(수) 풋살 6vs6 — 12명 / 2팀 (밸런스 92)');
+    // 포지션 없이 팀별 열로: 제목 → 구분선 → 선발 6줄 → 후보.
+    String strip(String s) => s
+        .replaceAll(RegExp('[\u3000\u2002 ]+│'), ' │')
+        .replaceAll(RegExp('[\u3000\u2002]'), '');
+    expect(strip(lines[2]), '🔴 레드 │ 🔵 블루');
+    expect(lines[3], startsWith('───'));
+    expect(strip(lines[4]), '선수a │ 선수h');
+    expect(strip(lines[8]), '선수e │ 선수l');
+    expect(strip(lines[9]), '선수f');
+    expect(lines[10], '── 후보 ──');
+    expect(strip(lines[11]), '선수g');
+    expect(lines.length, 12);
+    expect(text, isNot(contains('픽소')));
+    // 열 맞춤: 첫 칸은 가장 넓은 이름(🔴 레드)에 맞춰 공백으로 채운다.
+    expect(lines[4].split(' │ ').first, startsWith('선수a\u3000'));
   });
 }

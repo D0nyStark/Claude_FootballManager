@@ -77,6 +77,28 @@ Future<void> tapPlayer(WidgetTester tester, String name) async {
 }
 
 void main() {
+  testWidgets('게스트 추가: 가로 화면 키보드가 올라와도 이름 칸과 추가 버튼이 보인다', (tester) async {
+    await enterGroup(tester);
+    await tapAndSettle(tester, find.text('5 vs 5'));
+    await tapAndSettle(tester, find.text('게스트'));
+    // 360dp 중 키보드가 200dp를 차지한 상태.
+    tester.view.viewInsets = const FakeViewPadding(bottom: 400);
+    await tester.pumpAndSettle();
+    final visible = Offset.zero & const Size(800, 160);
+    for (final f in [
+      find.byKey(const Key('guestName')),
+      find.widgetWithText(FilledButton, '추가'),
+      find.widgetWithText(TextButton, '취소'),
+    ]) {
+      expect(visible.contains(tester.getCenter(f)), isTrue, reason: '$f');
+    }
+    await tester.enterText(find.byKey(const Key('guestName')), '용병');
+    await tapAndSettle(tester, find.widgetWithText(FilledButton, '추가'));
+    tester.view.resetViewInsets();
+    await tester.pumpAndSettle();
+    expect(find.text('용병 (게스트)'), findsOneWidget);
+  });
+
   testWidgets('6vs6 → 주멤버 전체 선택 + 일반멤버 + 게스트 → 3팀 → 팀 짜기 결과', (tester) async {
     await enterGroup(tester);
     await tapAndSettle(tester, find.text('6 vs 6'));
