@@ -65,8 +65,9 @@ enum MatchFormat {
   ({double x, double y}) coordinateOf(Slot slot) => switch ((this, slot)) {
     (_, Slot.gk) => (x: 0.50, y: 1.00),
     (MatchFormat.fiveVsFive, Slot.fixo1) => (x: 0.50, y: 0.66),
-    (MatchFormat.sixVsSix, Slot.fixo1) => (x: 0.25, y: 0.68),
-    (_, Slot.fixo2) => (x: 0.75, y: 0.68),
+    // 6vs6: 픽소 2명을 아라와 같은 세로줄에 두어 육각형 구조로.
+    (MatchFormat.sixVsSix, Slot.fixo1) => (x: 0.04, y: 0.68),
+    (_, Slot.fixo2) => (x: 0.96, y: 0.68),
     (_, Slot.alaLeft) => (x: 0.04, y: 0.36),
     (_, Slot.alaRight) => (x: 0.96, y: 0.36),
     (_, Slot.pivo) => (x: 0.50, y: 0.04),
