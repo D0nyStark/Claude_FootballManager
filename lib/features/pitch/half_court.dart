@@ -106,6 +106,8 @@ class PositionCircle extends StatelessWidget {
     this.offPosition = false,
     this.keeperMark,
     this.borrowed = false,
+    this.pinned = false,
+    this.highlight = false,
   });
 
   final Slot slot;
@@ -121,11 +123,35 @@ class PositionCircle extends StatelessWidget {
   /// 부족 팀의 빈 자리 ("+1 빌려오기").
   final bool borrowed;
 
+  /// 📌 고정된 선수.
+  final bool pinned;
+
+  /// 끌어 온 선수를 놓을 수 있는 자리로 강조.
+  final bool highlight;
+
   static Color slotColor(Slot slot) =>
       slot.isKeeper ? const Color(0xFFE0B000) : positionColor(slot.position!);
 
   @override
   Widget build(BuildContext context) {
+    final circle = _circle(context);
+    if (!highlight) return circle;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.9),
+            blurRadius: 10,
+            spreadRadius: 3,
+          ),
+        ],
+      ),
+      child: circle,
+    );
+  }
+
+  Widget _circle(BuildContext context) {
     final p = player;
     if (p == null) return _empty(context);
     final name = shortName(p.displayName);
@@ -174,6 +200,21 @@ class PositionCircle extends StatelessWidget {
               left: -size * 0.12,
               top: -size * 0.12,
               child: Text(keeperMark!, style: TextStyle(fontSize: size * 0.3)),
+            ),
+          if (pinned)
+            Positioned(
+              right: -size * 0.08,
+              bottom: -size * 0.08,
+              child: CircleAvatar(
+                key: const Key('pinBadge'),
+                radius: size * 0.16,
+                backgroundColor: Colors.white,
+                child: Icon(
+                  Icons.push_pin,
+                  size: size * 0.22,
+                  color: Colors.redAccent,
+                ),
+              ),
             ),
           if (offPosition)
             Positioned(

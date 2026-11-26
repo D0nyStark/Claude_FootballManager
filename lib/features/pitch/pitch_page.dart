@@ -15,6 +15,8 @@ import '../tutorial/tutorial_steps.dart';
 import 'balance_header.dart';
 import 'half_court.dart';
 
+import 'package:flutter/services.dart';
+
 /// 구장 화면 (SPEC F4·F5·F7, §8.4): 반쪽 구장을 나란히 놓고 포지션 원에 선수를 배치한다.
 ///
 /// [⚡ 자동 편성]을 누르면 왼쪽 출전 덱의 선수들이 포지션 원으로 날아 들어간다.
@@ -51,6 +53,18 @@ class _PitchPageState extends ConsumerState<PitchPage>
 
   List<LineupCandidate> _candidates = const [];
   int _index = 0;
+
+  /// 화면에 보이는 편성 (자동 편성 결과 + 수동 수정). 배치 전에는 null.
+  Lineup? _current;
+  final List<Lineup> _undo = [];
+  final List<Lineup> _redo = [];
+
+  /// 📌 고정: 선수 id. [다시 섞기]·[자동 편성]을 해도 지금 팀·자리에 남는다.
+  final Set<String> _pins = {};
+
+  /// 팀 이름·조끼 색 (SPEC F6.5).
+  final List<String> _names = [...teamNames];
+  final List<Color> _colors = [...teamColors];
   int _seed = 0;
   final List<Lineup> _shown = [];
   bool _busy = false;
@@ -69,8 +83,7 @@ class _PitchPageState extends ConsumerState<PitchPage>
   static const _flightTime = 0.35; // 초
   static const _stagger = 0.045;
 
-  Lineup? get _lineup =>
-      _candidates.isEmpty ? null : _candidates[_index].lineup;
+  Lineup? get _lineup => _current;
 
   bool get _flying => _flights.isNotEmpty;
 
@@ -101,6 +114,7 @@ class _PitchPageState extends ConsumerState<PitchPage>
       _seed++;
     }
     final r = widget.request;
+    final pinned = _pinned();
     final result = await ref.read(balancerRunnerProvider)(
       BalanceRequest(
         players: r.players,
@@ -113,13 +127,17 @@ class _PitchPageState extends ConsumerState<PitchPage>
         repeatAvoidance: r.repeatAvoidance,
         avoidLineups: [..._shown],
         seed: _seed,
+        pinnedTeams: pinned.teams,
+        pinnedSlots: pinned.slots,
       ),
     );
     if (!mounted) return;
     switch (result) {
       case BalanceSuccess(:final candidates):
         _shown.addAll(candidates.map((c) => c.lineup));
-        await _showCandidates(candidates, 0);
+        _candidates = candidates;
+        _index = 0;
+        await _animateTo(candidates.first.lineup);
       case BalanceFailure():
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('출전 인원과 팀 수를 다시 확인해 주세요.')),
@@ -131,13 +149,97 @@ class _PitchPageState extends ConsumerState<PitchPage>
   Future<void> _select(int index) async {
     if (_busy || index == _index) return;
     setState(() => _busy = true);
-    await _showCandidates(_candidates, index);
+    _index = index;
+    await _animateTo(_candidates[index].lineup);
     if (mounted) setState(() => _busy = false);
   }
 
+  /// 📌 고정된 선수의 지금 팀·자리 → 편성 엔진의 Pin.
+  ({Map<String, int> teams, Map<String, Slot> slots}) _pinned() {
+    final teams = <String, int>{};
+    final slots = <String, Slot>{};
+    final current = _current;
+    if (current != null) {
+      for (final id in _pins) {
+        if (spotOf(current, id) case SlotSpot(:final team, :final slot)) {
+          teams[id] = team;
+          slots[id] = slot;
+        }
+      }
+    }
+    return (teams: teams, slots: slots);
+  }
+
+  // ───────────────────────── 수동 수정 (SPEC F6) ─────────────────────────
+
+  double? _score(Lineup? l) => l == null ? null : _evaluator.evaluate(l).total;
+
+  /// 끌어 놓기: 맞교환·이동. 바로 반영하고 되돌리기 목록에 쌓는다.
+  void _move(Spot from, Spot to) {
+    final current = _current;
+    if (current == null) return;
+    final next = moveInLineup(current, from, to);
+    if (identical(next, current)) return;
+    HapticFeedback.selectionClick();
+    setState(() {
+      _previousScore = _score(current);
+      _undo.add(current);
+      _redo.clear();
+      _current = next;
+    });
+  }
+
+  void _undoEdit() {
+    if (_undo.isEmpty || _busy) return;
+    setState(() {
+      _previousScore = _score(_current);
+      _redo.add(_current!);
+      _current = _undo.removeLast();
+    });
+  }
+
+  void _redoEdit() {
+    if (_redo.isEmpty || _busy) return;
+    setState(() {
+      _previousScore = _score(_current);
+      _undo.add(_current!);
+      _current = _redo.removeLast();
+    });
+  }
+
+  /// 자동 편성 결과로 초기화 (되돌리기 가능).
+  void _resetEdits() {
+    if (_candidates.isEmpty || _busy) return;
+    final original = _candidates[_index].lineup;
+    if (identical(original, _current)) return;
+    setState(() {
+      _previousScore = _score(_current);
+      _undo.add(_current!);
+      _redo.clear();
+      _current = original;
+    });
+  }
+
+  void _togglePin(String id) {
+    HapticFeedback.mediumImpact();
+    setState(() => _pins.contains(id) ? _pins.remove(id) : _pins.add(id));
+  }
+
+  Future<void> _editTeam(int t) async {
+    final result = await showDialog<(String, Color)>(
+      context: context,
+      builder: (_) => _TeamStyleDialog(name: _names[t], color: _colors[t]),
+    );
+    if (result == null) return;
+    setState(() {
+      _names[t] = result.$1;
+      _colors[t] = result.$2;
+    });
+  }
+
   /// 지금 자리에서 새 자리로 선수들이 날아가는 애니메이션 후 반영.
-  Future<void> _showCandidates(List<LineupCandidate> list, int index) async {
-    final next = list[index].lineup;
+  /// 자동 편성·다시 섞기·편성안 바꾸기도 되돌리기로 돌아갈 수 있다.
+  Future<void> _animateTo(Lineup next) async {
     final starts = <String, Offset>{};
     final current = _lineup;
     for (final id in _players.keys) {
@@ -153,7 +255,7 @@ class _PitchPageState extends ConsumerState<PitchPage>
         final to = _center(_slotKey(t, slot));
         if (to != null) {
           flights.add(
-            _Flight(_players[id]!, starts[id]!, to, teamColors[t], order++),
+            _Flight(_players[id]!, starts[id]!, to, _colors[t], order++),
           );
         }
       }
@@ -165,24 +267,26 @@ class _PitchPageState extends ConsumerState<PitchPage>
             _players[id]!,
             starts[id]!,
             bench + Offset((i - (team.bench.length - 1) / 2) * 64, 0),
-            teamColors[t],
+            _colors[t],
             order++,
           ),
         );
       }
     }
 
-    _previousScore = _candidates.isEmpty
-        ? null
-        : _evaluator.evaluate(_lineup!).total;
+    final before = _current;
+    _previousScore = _score(before);
     final seconds = _flightTime + _stagger * math.max(0, flights.length - 1);
     setState(() => _flights = flights);
     _fly.duration = Duration(milliseconds: (seconds * 1000).round());
     await _fly.forward(from: 0).orCancel.catchError((_) {});
     if (!mounted) return;
     setState(() {
-      _candidates = list;
-      _index = index;
+      if (before != null) {
+        _undo.add(before);
+        _redo.clear();
+      }
+      _current = next;
       _flights = const [];
       _deckOpen = false;
     });
@@ -385,7 +489,7 @@ class _PitchPageState extends ConsumerState<PitchPage>
                           border: teamOf[p.id] == null
                               ? null
                               : Border.all(
-                                  color: teamColors[teamOf[p.id]!],
+                                  color: _colors[teamOf[p.id]!],
                                   width: 2,
                                 ),
                         ),
@@ -408,7 +512,7 @@ class _PitchPageState extends ConsumerState<PitchPage>
   Widget _rail() {
     final arranged = _lineup != null;
     return SizedBox(
-      width: 76,
+      width: 84,
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
@@ -433,7 +537,50 @@ class _PitchPageState extends ConsumerState<PitchPage>
               onPressed: _busy || !arranged ? null : () => _run(fresh: false),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 4),
+          CoachTarget(
+            id: 'pitch.undo',
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      key: const Key('undo'),
+                      tooltip: '되돌리기',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _undo.isEmpty || _busy ? null : _undoEdit,
+                      icon: const Icon(Icons.undo),
+                    ),
+                    IconButton(
+                      key: const Key('redo'),
+                      tooltip: '다시하기',
+                      visualDensity: VisualDensity.compact,
+                      onPressed: _redo.isEmpty || _busy ? null : _redoEdit,
+                      icon: const Icon(Icons.redo),
+                    ),
+                  ],
+                ),
+                TextButton(
+                  key: const Key('resetEdits'),
+                  style: TextButton.styleFrom(
+                    visualDensity: VisualDensity.compact,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    minimumSize: const Size(0, 28),
+                  ),
+                  onPressed:
+                      arranged &&
+                          !_busy &&
+                          !identical(_current, _candidates[_index].lineup)
+                      ? _resetEdits
+                      : null,
+                  child: const Text('초기화', style: TextStyle(fontSize: 12)),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
           // 확정·공유는 M6에서 구현.
           const _RailButton(
             icon: Icons.check_circle_outline,
@@ -507,7 +654,7 @@ class _PitchPageState extends ConsumerState<PitchPage>
     double pad,
   ) {
     final theme = Theme.of(context);
-    final color = teamColors[t];
+    final color = _colors[t];
     final c = _circleSize;
     String? stats;
     if (summary != null && _canSeeStats) {
@@ -522,27 +669,30 @@ class _PitchPageState extends ConsumerState<PitchPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(
-              height: summaryH,
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.centerLeft,
-                child: Text.rich(
-                  TextSpan(
-                    children: [
-                      TextSpan(
-                        text: teamNames[t],
-                        style: theme.textTheme.titleSmall!.copyWith(
-                          color: color,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      if (stats != null)
+            InkWell(
+              onTap: () => _editTeam(t),
+              child: SizedBox(
+                height: summaryH,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
                         TextSpan(
-                          text: '  $stats',
-                          style: theme.textTheme.bodySmall,
+                          text: _names[t],
+                          style: theme.textTheme.titleSmall!.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w700,
+                          ),
                         ),
-                    ],
+                        if (stats != null)
+                          TextSpan(
+                            text: '  $stats',
+                            style: theme.textTheme.bodySmall,
+                          ),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -563,7 +713,7 @@ class _PitchPageState extends ConsumerState<PitchPage>
               SizedBox(
                 key: _benchKeys.putIfAbsent(t, GlobalKey.new),
                 height: benchH,
-                child: _bench(team, color),
+                child: _bench(t, team, color),
               ),
           ],
         ),
@@ -584,54 +734,126 @@ class _PitchPageState extends ConsumerState<PitchPage>
     final top = xy.y * (court - c);
     final id = team?.slots[slot];
     final player = id == null ? null : _players[id];
+    final spot = SlotSpot(t, slot);
+    Widget circle({bool highlight = false, bool ghost = false}) =>
+        PositionCircle(
+          slot: slot,
+          size: c,
+          teamColor: _colors[t],
+          player: ghost ? null : player,
+          showOvr: _canSeeStats,
+          offPosition:
+              !ghost && id != null && _evaluator.isOffPosition(id, slot),
+          keeperMark: !ghost && slot.isKeeper && id != null
+              ? (team!.fixedKeeperId != null ? '🧤' : '🔄')
+              : null,
+          borrowed: team != null && (id == null || ghost),
+          pinned: !ghost && id != null && _pins.contains(id),
+          highlight: highlight,
+        );
     return Positioned(
       left: left,
       top: top,
       child: KeyedSubtree(
         key: _slotKey(t, slot),
-        child: PositionCircle(
-          slot: slot,
-          size: c,
-          teamColor: teamColors[t],
-          player: player,
-          showOvr: _canSeeStats,
-          offPosition: id != null && _evaluator.isOffPosition(id, slot),
-          keeperMark: slot.isKeeper && id != null
-              ? (team!.fixedKeeperId != null ? '🧤' : '🔄')
-              : null,
-          borrowed: team != null && id == null,
-        ),
+        child: team == null
+            ? circle()
+            : DragTarget<_DragData>(
+                onWillAcceptWithDetails: (d) => d.data.from != spot,
+                onAcceptWithDetails: (d) => _move(d.data.from, spot),
+                builder: (context, candidates, _) {
+                  final over = candidates.isNotEmpty;
+                  if (id == null) return circle(highlight: over);
+                  return GestureDetector(
+                    onLongPress: () => _togglePin(id),
+                    child: Draggable<_DragData>(
+                      data: _DragData(id, spot),
+                      feedback: _dragFeedback(id, t),
+                      childWhenDragging: circle(ghost: true),
+                      child: circle(highlight: over),
+                    ),
+                  );
+                },
+              ),
       ),
     );
   }
 
-  Widget _bench(TeamLineup? team, Color color) {
+  /// 끄는 동안 손가락을 따라다니는 원.
+  Widget _dragFeedback(String id, int t) => Material(
+    type: MaterialType.transparency,
+    child: Transform.scale(
+      scale: 1.15,
+      child: PositionCircle(
+        slot: Slot.pivo,
+        size: _circleSize,
+        teamColor: _colors[t],
+        player: _players[id],
+        showOvr: _canSeeStats,
+      ),
+    ),
+  );
+
+  /// 후보 영역: 원을 여기로 끌면 후보로 내리고, 후보 칩을 원으로 끌면 맞교환 (SPEC F7.3).
+  Widget _bench(int t, TeamLineup? team, Color color) {
     final theme = Theme.of(context);
     final bench = team?.bench ?? const [];
-    return Row(
-      children: [
-        Text('후보', style: theme.textTheme.labelSmall),
-        const SizedBox(width: 6),
-        Expanded(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: [
-                for (final id in bench)
-                  Padding(
-                    padding: const EdgeInsets.only(right: 4),
-                    child: Chip(
-                      visualDensity: VisualDensity.compact,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      side: BorderSide(color: color, width: 1.5),
-                      label: Text(_players[id]!.name),
-                    ),
-                  ),
-              ],
-            ),
-          ),
+    Widget chip(String id, {bool highlight = false}) => Chip(
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      backgroundColor: highlight ? color.withValues(alpha: 0.25) : null,
+      side: BorderSide(color: color, width: 1.5),
+      label: Text(_players[id]!.name),
+    );
+    return DragTarget<_DragData>(
+      onWillAcceptWithDetails: (d) =>
+          team != null && d.data.from != BenchSpot(t, d.data.id),
+      onAcceptWithDetails: (d) => _move(d.data.from, BenchSpot(t)),
+      builder: (context, areaCandidates, _) => Container(
+        decoration: BoxDecoration(
+          color: areaCandidates.isNotEmpty
+              ? color.withValues(alpha: 0.12)
+              : null,
+          borderRadius: BorderRadius.circular(8),
         ),
-      ],
+        child: Row(
+          children: [
+            Text('후보', style: theme.textTheme.labelSmall),
+            const SizedBox(width: 6),
+            Expanded(
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    for (final id in bench)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 4),
+                        child: DragTarget<_DragData>(
+                          onWillAcceptWithDetails: (d) => d.data.id != id,
+                          onAcceptWithDetails: (d) =>
+                              _move(d.data.from, BenchSpot(t, id)),
+                          builder: (context, candidates, _) =>
+                              Draggable<_DragData>(
+                                data: _DragData(id, BenchSpot(t, id)),
+                                feedback: _dragFeedback(id, t),
+                                childWhenDragging: Opacity(
+                                  opacity: 0.3,
+                                  child: chip(id),
+                                ),
+                                child: chip(
+                                  id,
+                                  highlight: candidates.isNotEmpty,
+                                ),
+                              ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -673,4 +895,88 @@ class _RailButton extends StatelessWidget {
       ],
     );
   }
+}
+
+class _DragData {
+  const _DragData(this.id, this.from);
+
+  final String id;
+  final Spot from;
+}
+
+/// 팀 이름·조끼 색 바꾸기 (SPEC F6.5).
+class _TeamStyleDialog extends StatefulWidget {
+  const _TeamStyleDialog({required this.name, required this.color});
+
+  final String name;
+  final Color color;
+
+  @override
+  State<_TeamStyleDialog> createState() => _TeamStyleDialogState();
+}
+
+class _TeamStyleDialogState extends State<_TeamStyleDialog> {
+  late final _name = TextEditingController(text: widget.name);
+  late Color _color = widget.color;
+
+  static const palette = [
+    ...teamColors,
+    Color(0xFF7B4CC2),
+    Color(0xFFF08C00),
+    Color(0xFF00897B),
+    Color(0xFF455A64),
+  ];
+
+  @override
+  void dispose() {
+    _name.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: const Text('팀 이름·조끼 색'),
+    content: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TextField(
+          key: const Key('teamName'),
+          controller: _name,
+          decoration: const InputDecoration(labelText: '팀 이름'),
+        ),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          children: [
+            for (final c in palette)
+              InkWell(
+                customBorder: const CircleBorder(),
+                onTap: () => setState(() => _color = c),
+                child: CircleAvatar(
+                  radius: 15,
+                  backgroundColor: c,
+                  child: _color == c
+                      ? const Icon(Icons.check, size: 16, color: Colors.white)
+                      : null,
+                ),
+              ),
+          ],
+        ),
+      ],
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.pop(context),
+        child: const Text('취소'),
+      ),
+      FilledButton(
+        onPressed: () => Navigator.pop(context, (
+          _name.text.trim().isEmpty ? widget.name : _name.text.trim(),
+          _color,
+        )),
+        child: const Text('저장'),
+      ),
+    ],
+  );
 }

@@ -1,6 +1,7 @@
 export 'formation.dart';
 export 'group_role.dart';
 export 'lineup.dart';
+export 'lineup_edit.dart';
 export 'member_type.dart';
 export 'player.dart';
 export 'player_stats.dart';
