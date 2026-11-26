@@ -91,61 +91,93 @@ class _ConstraintDialogState extends State<ConstraintDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final sorted = [...widget.players]
       ..sort((a, b) => a.name.compareTo(b.name));
-    return AlertDialog(
-      title: const Text('제약 추가'),
-      content: SizedBox(
-        width: 480,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SegmentedButton<ConstraintType>(
-              segments: [
-                for (final t in ConstraintType.values)
-                  ButtonSegment(value: t, label: Text('항상 ${t.label}')),
-              ],
-              selected: {_type},
-              onSelectionChanged: (s) => setState(() => _type = s.first),
-            ),
-            const SizedBox(height: 12),
-            const Text('선수를 2명 이상 고르세요.'),
-            const SizedBox(height: 8),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    for (final p in sorted)
-                      FilterChip(
-                        label: Text(p.name),
-                        selected: _selected.contains(p.id),
-                        onSelected: (on) => setState(
-                          () =>
-                              on ? _selected.add(p.id) : _selected.remove(p.id),
-                        ),
+    // 가로 폰은 높이가 낮다: 제목·종류를 한 줄에 두고 남은 높이를 모두 선수 고르기에 쓴다.
+    final height = MediaQuery.sizeOf(context).height;
+    return Dialog(
+      insetPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxWidth: 760, maxHeight: height - 24),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 12, 16, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  Text('제약 추가', style: theme.textTheme.titleLarge),
+                  const SizedBox(width: 16),
+                  Flexible(
+                    child: SegmentedButton<ConstraintType>(
+                      style: SegmentedButton.styleFrom(
+                        visualDensity: VisualDensity.compact,
                       ),
-                  ],
+                      segments: [
+                        for (final t in ConstraintType.values)
+                          ButtonSegment(value: t, label: Text('항상 ${t.label}')),
+                      ],
+                      selected: {_type},
+                      onSelectionChanged: (s) =>
+                          setState(() => _type = s.first),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
+              Text(
+                _selected.isEmpty
+                    ? '선수를 2명 이상 고르세요.'
+                    : '${_selected.length}명 선택 · 2명 이상 고르세요.',
+                key: const Key('constraintCount'),
+                style: theme.textTheme.bodySmall,
+              ),
+              const SizedBox(height: 6),
+              Expanded(
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        for (final p in sorted)
+                          FilterChip(
+                            label: Text(p.name),
+                            selected: _selected.contains(p.id),
+                            onSelected: (on) => setState(
+                              () => on
+                                  ? _selected.add(p.id)
+                                  : _selected.remove(p.id),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('취소'),
+                  ),
+                  const SizedBox(width: 8),
+                  FilledButton(
+                    onPressed: _selected.length < 2
+                        ? null
+                        : () => Navigator.pop(context, (_type, {..._selected})),
+                    child: const Text('추가'),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('취소'),
-        ),
-        FilledButton(
-          onPressed: _selected.length < 2
-              ? null
-              : () => Navigator.pop(context, (_type, {..._selected})),
-          child: const Text('추가'),
-        ),
-      ],
     );
   }
 }
