@@ -6,6 +6,9 @@ import '../../data/repositories/group_repository.dart';
 import '../common/common_widgets.dart';
 import '../group/group_shell_page.dart';
 import '../onboarding/onboarding_page.dart';
+import '../tutorial/coach_marks.dart';
+import '../tutorial/tutorial.dart';
+import '../tutorial/tutorial_steps.dart';
 
 /// 첫 화면: 모임 목록 (SPEC F11, §8.2).
 class GroupListPage extends ConsumerStatefulWidget {
@@ -20,6 +23,7 @@ class GroupListPage extends ConsumerStatefulWidget {
 
 class _GroupListPageState extends ConsumerState<GroupListPage> {
   bool _autoEnterChecked = false;
+  bool _autoEntering = false;
 
   @override
   Widget build(BuildContext context) {
@@ -29,42 +33,58 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
       _autoEnterChecked = true;
       final list = groups.value!;
       if (widget.autoEnterSingleGroup && list.length == 1) {
+        _autoEntering = true;
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted) _openGroup(list.single);
         });
       }
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('풋살 팀메이커'),
-        actions: [
-          TextButton.icon(
-            // 초대 링크 참여는 M6.5에서 구현.
-            onPressed: null,
-            icon: const Icon(Icons.link),
-            label: const Text('초대 링크로 참여'),
-          ),
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: groups.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('불러오지 못했어요: $e')),
-        data: (list) => SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Wrap(
-            spacing: 16,
-            runSpacing: 16,
-            children: [
-              for (final g in list)
-                _GroupCard(
-                  group: g,
-                  onTap: () => _openGroup(g),
-                  onLongPress: () => _showGroupMenu(g),
+    return TutorialHost(
+      screen: TutorialScreen.groupList,
+      // 바로 모임으로 들어가는 경우에는 돌아왔을 때 보여준다.
+      ready: groups.hasValue && !_autoEntering,
+      steps: () => TutorialSteps.groupList,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('풋살 팀메이커'),
+          actions: [
+            CoachTarget(
+              id: 'groups.join',
+              child: TextButton.icon(
+                // 초대 링크 참여는 M6.5에서 구현.
+                onPressed: null,
+                icon: const Icon(Icons.link),
+                label: const Text('초대 링크로 참여'),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: groups.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('불러오지 못했어요: $e')),
+          data: (list) => SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: [
+                for (final (i, g) in list.indexed)
+                  CoachTarget(
+                    id: i == 0 ? 'groups.card' : 'groups.card$i',
+                    child: _GroupCard(
+                      group: g,
+                      onTap: () => _openGroup(g),
+                      onLongPress: () => _showGroupMenu(g),
+                    ),
+                  ),
+                CoachTarget(
+                  id: 'groups.create',
+                  child: _CreateGroupCard(onTap: _createGroup),
                 ),
-              _CreateGroupCard(onTap: _createGroup),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -76,6 +96,7 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
     if (!mounted) return;
     await Navigator.of(context)
         .push(MaterialPageRoute(builder: (_) => GroupShellPage(groupId: g.id)));
+    if (_autoEntering && mounted) setState(() => _autoEntering = false);
   }
 
   void _createGroup() =>

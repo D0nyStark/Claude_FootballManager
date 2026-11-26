@@ -10,6 +10,9 @@ import '../players/constraints_view.dart';
 import 'lineup_result_page.dart';
 import 'match_session_controller.dart';
 import 'team_colors.dart';
+import '../tutorial/coach_marks.dart';
+import '../tutorial/tutorial.dart';
+import '../tutorial/tutorial_steps.dart';
 
 /// 팀 설정 (SPEC F3, §8.5): 형식 · 팀 수 [− n +] · 키퍼 모드 · 당일 제약.
 class TeamSetupPage extends ConsumerWidget {
@@ -32,44 +35,51 @@ class TeamSetupPage extends ConsumerWidget {
             ref.watch(constraintsProvider(group.id)).value ?? [];
         final session = controller.session;
         final deck = session.deck(registered);
-        return Scaffold(
-          appBar: AppBar(title: Text('팀 설정 · 출전 ${deck.length}명')),
-          body: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(child: _teamOptions(context, session, deck)),
-              const VerticalDivider(width: 1),
-              Expanded(
-                child: _constraints(context, session, deck, groupConstraints),
-              ),
-            ],
-          ),
-          bottomNavigationBar: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  FilledButton.icon(
-                    key: const Key('makeTeams'),
-                    onPressed: deck.length < session.teamCount
-                        ? null
-                        : () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => LineupResultPage(
-                                group: group,
-                                request: buildBalanceRequest(
-                                  session: session,
-                                  registered: registered,
-                                  groupConstraints: groupConstraints,
+        return TutorialHost(
+          screen: TutorialScreen.teamSetup,
+          steps: () => TutorialSteps.teamSetup,
+          child: Scaffold(
+            appBar: AppBar(title: Text('팀 설정 · 출전 ${deck.length}명')),
+            body: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(child: _teamOptions(context, session, deck)),
+                const VerticalDivider(width: 1),
+                Expanded(
+                  child: _constraints(context, session, deck, groupConstraints),
+                ),
+              ],
+            ),
+            bottomNavigationBar: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CoachTarget(
+                      id: 'setup.make',
+                      child: FilledButton.icon(
+                        key: const Key('makeTeams'),
+                        onPressed: deck.length < session.teamCount
+                            ? null
+                            : () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => LineupResultPage(
+                                    group: group,
+                                    request: buildBalanceRequest(
+                                      session: session,
+                                      registered: registered,
+                                      groupConstraints: groupConstraints,
+                                    ),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ),
-                    icon: const Icon(Icons.bolt),
-                    label: const Text('팀 짜기'),
-                  ),
-                ],
+                        icon: const Icon(Icons.bolt),
+                        label: const Text('팀 짜기'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -112,38 +122,41 @@ class TeamSetupPage extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              SizedBox(
-                width: 64,
-                child: Text('팀 수', style: theme.textTheme.labelLarge),
-              ),
-              IconButton.outlined(
-                tooltip: '팀 줄이기',
-                onPressed: session.teamCount > MatchSession.minTeams
-                    ? () => controller.setTeamCount(session.teamCount - 1)
-                    : null,
-                icon: const Icon(Icons.remove),
-              ),
-              SizedBox(
-                width: 44,
-                child: Text(
-                  '${session.teamCount}',
-                  key: const Key('teamCount'),
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.headlineSmall,
+          CoachTarget(
+            id: 'setup.teamCount',
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 64,
+                  child: Text('팀 수', style: theme.textTheme.labelLarge),
                 ),
-              ),
-              IconButton.outlined(
-                tooltip: '팀 늘리기',
-                onPressed:
-                    session.teamCount < MatchSession.maxTeams &&
-                        deck.length > session.teamCount
-                    ? () => controller.setTeamCount(session.teamCount + 1)
-                    : null,
-                icon: const Icon(Icons.add),
-              ),
-            ],
+                IconButton.outlined(
+                  tooltip: '팀 줄이기',
+                  onPressed: session.teamCount > MatchSession.minTeams
+                      ? () => controller.setTeamCount(session.teamCount - 1)
+                      : null,
+                  icon: const Icon(Icons.remove),
+                ),
+                SizedBox(
+                  width: 44,
+                  child: Text(
+                    '${session.teamCount}',
+                    key: const Key('teamCount'),
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.headlineSmall,
+                  ),
+                ),
+                IconButton.outlined(
+                  tooltip: '팀 늘리기',
+                  onPressed:
+                      session.teamCount < MatchSession.maxTeams &&
+                          deck.length > session.teamCount
+                      ? () => controller.setTeamCount(session.teamCount + 1)
+                      : null,
+                  icon: const Icon(Icons.add),
+                ),
+              ],
+            ),
           ),
           Padding(
             padding: const EdgeInsets.only(left: 64, top: 4),
@@ -174,22 +187,25 @@ class TeamSetupPage extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           Text('골키퍼', style: theme.textTheme.labelLarge),
-          RadioGroup<KeeperMode>(
-            groupValue: session.keeperMode,
-            onChanged: (m) => controller.setKeeperMode(m!),
-            child: const Column(
-              children: [
-                RadioListTile(
-                  dense: true,
-                  value: KeeperMode.rotation,
-                  title: Text('로테이션 (돌아가며 키퍼)'),
-                ),
-                RadioListTile(
-                  dense: true,
-                  value: KeeperMode.fixed,
-                  title: Text('키퍼 고정'),
-                ),
-              ],
+          CoachTarget(
+            id: 'setup.keeper',
+            child: RadioGroup<KeeperMode>(
+              groupValue: session.keeperMode,
+              onChanged: (m) => controller.setKeeperMode(m!),
+              child: const Column(
+                children: [
+                  RadioListTile(
+                    dense: true,
+                    value: KeeperMode.rotation,
+                    title: Text('로테이션 (돌아가며 키퍼)'),
+                  ),
+                  RadioListTile(
+                    dense: true,
+                    value: KeeperMode.fixed,
+                    title: Text('키퍼 고정'),
+                  ),
+                ],
+              ),
             ),
           ),
           if (session.keeperMode == KeeperMode.fixed)
@@ -267,30 +283,33 @@ class TeamSetupPage extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text('오늘만 적용할 조건', style: theme.textTheme.labelLarge),
-              ),
-              TextButton.icon(
-                onPressed: deck.length < 2
-                    ? null
-                    : () async {
-                        final result =
-                            await showDialog<(ConstraintType, Set<String>)>(
-                              context: context,
-                              builder: (_) => ConstraintDialog(players: deck),
-                            );
-                        if (result != null) {
-                          controller.addDayConstraint(result.$1, result.$2);
-                        }
-                      },
-                icon: const Icon(Icons.add),
-                label: const Text('추가'),
-              ),
-            ],
+        CoachTarget(
+          id: 'setup.day',
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text('오늘만 적용할 조건', style: theme.textTheme.labelLarge),
+                ),
+                TextButton.icon(
+                  onPressed: deck.length < 2
+                      ? null
+                      : () async {
+                          final result =
+                              await showDialog<(ConstraintType, Set<String>)>(
+                                context: context,
+                                builder: (_) => ConstraintDialog(players: deck),
+                              );
+                          if (result != null) {
+                            controller.addDayConstraint(result.$1, result.$2);
+                          }
+                        },
+                  icon: const Icon(Icons.add),
+                  label: const Text('추가'),
+                ),
+              ],
+            ),
           ),
         ),
         if (applied > 0)

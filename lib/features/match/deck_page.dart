@@ -9,6 +9,9 @@ import '../../data/session/match_session.dart';
 import '../common/common_widgets.dart';
 import 'match_session_controller.dart';
 import 'team_setup_page.dart';
+import '../tutorial/coach_marks.dart';
+import '../tutorial/tutorial.dart';
+import '../tutorial/tutorial_steps.dart';
 
 /// 출전 덱 구성 (SPEC F2, §8.3): 주멤버 | 일반멤버 | 출전 덱 3단.
 class DeckPage extends ConsumerStatefulWidget {
@@ -64,28 +67,33 @@ class _DeckPageState extends ConsumerState<DeckPage> {
   Widget build(BuildContext context) {
     final players = ref.watch(playersProvider(widget.group.id));
     final controller = _controller;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('출전 덱 · ${widget.format.label}'),
-        actions: [
-          SizedBox(
-            width: 220,
-            child: TextField(
-              decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
-                hintText: '선수 검색',
-                isDense: true,
-                border: InputBorder.none,
+    return TutorialHost(
+      screen: TutorialScreen.deck,
+      ready: controller != null && players.hasValue,
+      steps: () => TutorialSteps.deck,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('출전 덱 · ${widget.format.label}'),
+          actions: [
+            SizedBox(
+              width: 220,
+              child: TextField(
+                decoration: const InputDecoration(
+                  prefixIcon: Icon(Icons.search),
+                  hintText: '선수 검색',
+                  isDense: true,
+                  border: InputBorder.none,
+                ),
+                onChanged: (v) => setState(() => _query = v.trim()),
               ),
-              onChanged: (v) => setState(() => _query = v.trim()),
             ),
-          ),
-          const SizedBox(width: 8),
-        ],
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: controller == null || !players.hasValue
+            ? const Center(child: CircularProgressIndicator())
+            : _body(controller, players.value!),
       ),
-      body: controller == null || !players.hasValue
-          ? const Center(child: CircularProgressIndicator())
-          : _body(controller, players.value!),
     );
   }
 
@@ -115,18 +123,29 @@ class _DeckPageState extends ConsumerState<DeckPage> {
             players: split.core,
             action: allCoreIds.isEmpty
                 ? null
-                : TextButton(
-                    onPressed: () => c.toggleAll(allCoreIds),
-                    child: Text(allCoreIds.every(c.inDeck) ? '전체 해제' : '전체 선택'),
+                : CoachTarget(
+                    id: 'deck.selectAll',
+                    child: TextButton(
+                      onPressed: () => c.toggleAll(allCoreIds),
+                      child: Text(
+                        allCoreIds.every(c.inDeck) ? '전체 해제' : '전체 선택',
+                      ),
+                    ),
                   ),
           ),
         ),
         const VerticalDivider(width: 1),
         Expanded(
-          child: _column(c, title: '👤 일반멤버', players: split.regular),
+          child: CoachTarget(
+            id: 'deck.regular',
+            child: _column(c, title: '👤 일반멤버', players: split.regular),
+          ),
         ),
         const VerticalDivider(width: 1),
-        SizedBox(width: 250, child: _deckPanel(c, registered)),
+        CoachTarget(
+          id: 'deck.panel',
+          child: SizedBox(width: 250, child: _deckPanel(c, registered)),
+        ),
       ],
     );
   }
@@ -246,22 +265,30 @@ class _DeckPageState extends ConsumerState<DeckPage> {
           padding: const EdgeInsets.all(10),
           child: Row(
             children: [
-              OutlinedButton.icon(
-                onPressed: () => _addGuest(c, registered),
-                icon: const Icon(Icons.person_add_alt),
-                label: const Text('게스트'),
+              CoachTarget(
+                id: 'deck.guest',
+                child: OutlinedButton.icon(
+                  onPressed: () => _addGuest(c, registered),
+                  icon: const Icon(Icons.person_add_alt),
+                  label: const Text('게스트'),
+                ),
               ),
               const Spacer(),
-              FilledButton(
-                onPressed: deck.length < MatchSession.minTeams
-                    ? null
-                    : () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) =>
-                              TeamSetupPage(group: widget.group, controller: c),
+              CoachTarget(
+                id: 'deck.next',
+                child: FilledButton(
+                  onPressed: deck.length < MatchSession.minTeams
+                      ? null
+                      : () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => TeamSetupPage(
+                              group: widget.group,
+                              controller: c,
+                            ),
+                          ),
                         ),
-                      ),
-                child: const Text('다음 →'),
+                  child: const Text('다음 →'),
+                ),
               ),
             ],
           ),

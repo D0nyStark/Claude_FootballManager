@@ -9,6 +9,7 @@ import 'package:futsalteammaker/core/balancer/balancer.dart';
 import 'package:futsalteammaker/data/db/app_database.dart';
 import 'package:futsalteammaker/data/providers.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:futsalteammaker/features/tutorial/tutorial.dart';
 
 /// 가로 폰 (800×360dp).
 const landscapePhone = Size(800, 360);
@@ -19,6 +20,7 @@ Future<AppDatabase> pumpApp(
   AppDatabase? db,
   Widget? home,
   Size size = landscapePhone,
+  bool tutorials = false,
 }) async {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   tester.view.physicalSize = size * 2;
@@ -31,6 +33,7 @@ Future<AppDatabase> pumpApp(
       overrides: [
         databaseProvider.overrideWithValue(database),
         deviceIdProvider.overrideWithValue('test-device'),
+        tutorialEnabledProvider.overrideWithValue(tutorials),
         // 테스트에서는 isolate 없이 바로 계산 (가짜 시간과 충돌 방지).
         balancerRunnerProvider.overrideWithValue(
           (request) async => const TeamBalancer().balance(request),

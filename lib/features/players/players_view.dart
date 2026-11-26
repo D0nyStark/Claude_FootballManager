@@ -9,6 +9,9 @@ import '../../data/repositories/player_repository.dart';
 import '../common/common_widgets.dart';
 import 'constraints_view.dart';
 import 'player_editor.dart';
+import '../tutorial/coach_marks.dart';
+import '../tutorial/tutorial.dart';
+import '../tutorial/tutorial_steps.dart';
 
 /// 선수 관리 (SPEC F1): 왼쪽 목록 | 오른쪽 상세·편집 2단 구성.
 class PlayersView extends ConsumerStatefulWidget {
@@ -37,47 +40,55 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
   @override
   Widget build(BuildContext context) {
     final players = ref.watch(playersProvider(widget.group.id));
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(
-          width: 320,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                child: SegmentedButton<_Tab>(
-                  segments: const [
-                    ButtonSegment(value: _Tab.players, label: Text('선수')),
-                    ButtonSegment(
-                      value: _Tab.constraints,
-                      label: Text('같은 팀/다른 팀'),
+    return TutorialHost(
+      screen: TutorialScreen.players,
+      ready: players.hasValue,
+      steps: () => TutorialSteps.players(canSeeStats: _canSeeStats),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 320,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+                  child: CoachTarget(
+                    id: 'players.constraints',
+                    child: SegmentedButton<_Tab>(
+                      segments: const [
+                        ButtonSegment(value: _Tab.players, label: Text('선수')),
+                        ButtonSegment(
+                          value: _Tab.constraints,
+                          label: Text('같은 팀/다른 팀'),
+                        ),
+                      ],
+                      selected: {_tab},
+                      onSelectionChanged: (s) => setState(() => _tab = s.first),
                     ),
-                  ],
-                  selected: {_tab},
-                  onSelectionChanged: (s) => setState(() => _tab = s.first),
+                  ),
                 ),
-              ),
-              Expanded(
-                child: _tab == _Tab.players
-                    ? players.when(
-                        loading: () =>
-                            const Center(child: CircularProgressIndicator()),
-                        error: (e, _) => Center(child: Text('$e')),
-                        data: _playerList,
-                      )
-                    : ConstraintsView(
-                        groupId: widget.group.id,
-                        players: players.value ?? const [],
-                      ),
-              ),
-            ],
+                Expanded(
+                  child: _tab == _Tab.players
+                      ? players.when(
+                          loading: () =>
+                              const Center(child: CircularProgressIndicator()),
+                          error: (e, _) => Center(child: Text('$e')),
+                          data: _playerList,
+                        )
+                      : ConstraintsView(
+                          groupId: widget.group.id,
+                          players: players.value ?? const [],
+                        ),
+                ),
+              ],
+            ),
           ),
-        ),
-        const VerticalDivider(width: 1),
-        Expanded(child: _detail(players.value ?? const [])),
-      ],
+          const VerticalDivider(width: 1),
+          Expanded(child: _detail(players.value ?? const [])),
+        ],
+      ),
     );
   }
 
@@ -126,13 +137,16 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
                       PopupMenuItem(value: s, child: Text('${s.label} 순')),
                   ],
                 ),
-              IconButton.filledTonal(
-                tooltip: '선수 추가',
-                icon: const Icon(Icons.person_add),
-                onPressed: () => setState(() {
-                  _newPlayer = true;
-                  _selectedId = null;
-                }),
+              CoachTarget(
+                id: 'players.add',
+                child: IconButton.filledTonal(
+                  tooltip: '선수 추가',
+                  icon: const Icon(Icons.person_add),
+                  onPressed: () => setState(() {
+                    _newPlayer = true;
+                    _selectedId = null;
+                  }),
+                ),
               ),
             ],
           ),
@@ -159,11 +173,14 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
         Expanded(
           child: all.isEmpty
               ? const Center(child: Text('선수를 추가해 주세요.'))
-              : ListView(
-                  children: [
-                    _section(theme, '⭐ 주멤버', split.core),
-                    _section(theme, '👤 일반멤버', split.regular),
-                  ],
+              : CoachTarget(
+                  id: 'players.list',
+                  child: ListView(
+                    children: [
+                      _section(theme, '⭐ 주멤버', split.core),
+                      _section(theme, '👤 일반멤버', split.regular),
+                    ],
+                  ),
                 ),
         ),
       ],

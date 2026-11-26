@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
 
 import '../db/app_database.dart';
@@ -21,4 +22,19 @@ class DeviceRepository {
         .insert(DeviceSettingsCompanion.insert(key: _deviceIdKey, value: id));
     return id;
   }
+
+  Future<String?> get(String key) async => (await (_db.select(
+    _db.deviceSettings,
+  )..where((s) => s.key.equals(key))).getSingleOrNull())?.value;
+
+  Future<void> set(String key, String value) => _db
+      .into(_db.deviceSettings)
+      .insertOnConflictUpdate(
+        DeviceSettingsCompanion.insert(key: key, value: value),
+      );
+
+  /// [prefix]로 시작하는 설정을 모두 지운다.
+  Future<void> removePrefix(String prefix) => (_db.delete(
+    _db.deviceSettings,
+  )..where((s) => s.key.like('$prefix%'))).go();
 }

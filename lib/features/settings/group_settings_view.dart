@@ -5,6 +5,7 @@ import '../../core/models/formation.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../common/common_widgets.dart';
+import '../tutorial/tutorial.dart';
 
 /// 모임 설정 (SPEC F10 중 M2 범위: 이름·아이콘·색·기본 형식·내 이름).
 class GroupSettingsView extends ConsumerWidget {
@@ -53,6 +54,21 @@ class GroupSettingsView extends ConsumerWidget {
           contentPadding: EdgeInsets.zero,
           title: const Text('내 역할'),
           subtitle: Text(group.role.label),
+        ),
+        ListTile(
+          contentPadding: EdgeInsets.zero,
+          leading: const Icon(Icons.school_outlined),
+          title: const Text('사용법 다시 보기'),
+          subtitle: const Text('각 화면에 처음 들어갈 때처럼 설명 말풍선을 다시 보여줘요.'),
+          onTap: () async {
+            await ref.read(tutorialServiceProvider).reset();
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                const SnackBar(content: Text('이제 각 화면에서 사용법이 다시 보여요.')),
+              );
+          },
         ),
         const SizedBox(height: 8),
         Text('아이콘', style: theme.textTheme.labelLarge),

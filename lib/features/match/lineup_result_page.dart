@@ -8,6 +8,9 @@ import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../common/common_widgets.dart';
 import 'team_colors.dart';
+import '../tutorial/coach_marks.dart';
+import '../tutorial/tutorial.dart';
+import '../tutorial/tutorial_steps.dart';
 
 /// 편성 결과 (임시 화면). M4에서 구장 평면도 GUI로 바뀐다.
 ///
@@ -72,38 +75,49 @@ class _LineupResultPageState extends ConsumerState<LineupResultPage> {
   @override
   Widget build(BuildContext context) {
     final result = _result;
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('편성 결과'),
-        actions: [
-          if (result is BalanceSuccess && result.candidates.length > 1)
-            SegmentedButton<int>(
-              showSelectedIcon: false,
-              segments: [
-                for (var i = 0; i < result.candidates.length; i++)
-                  ButtonSegment(value: i, label: Text('편성안 ${i + 1}')),
-              ],
-              selected: {_index},
-              onSelectionChanged: (s) => setState(() => _index = s.first),
+    return TutorialHost(
+      screen: TutorialScreen.result,
+      ready: result is BalanceSuccess,
+      steps: () => TutorialSteps.result,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('편성 결과'),
+          actions: [
+            if (result is BalanceSuccess && result.candidates.length > 1)
+              CoachTarget(
+                id: 'result.candidates',
+                child: SegmentedButton<int>(
+                  showSelectedIcon: false,
+                  segments: [
+                    for (var i = 0; i < result.candidates.length; i++)
+                      ButtonSegment(value: i, label: Text('편성안 ${i + 1}')),
+                  ],
+                  selected: {_index},
+                  onSelectionChanged: (s) => setState(() => _index = s.first),
+                ),
+              ),
+            const SizedBox(width: 8),
+            CoachTarget(
+              id: 'result.shuffle',
+              child: FilledButton.tonalIcon(
+                onPressed: result == null ? null : _shuffle,
+                icon: const Icon(Icons.shuffle),
+                label: const Text('다시 섞기'),
+              ),
             ),
-          const SizedBox(width: 8),
-          FilledButton.tonalIcon(
-            onPressed: result == null ? null : _shuffle,
-            icon: const Icon(Icons.shuffle),
-            label: const Text('다시 섞기'),
+            const SizedBox(width: 8),
+          ],
+        ),
+        body: switch (result) {
+          null => const Center(child: CircularProgressIndicator()),
+          BalanceFailure() => const Center(
+            child: Text('출전 인원과 팀 수를 다시 확인해 주세요.'),
           ),
-          const SizedBox(width: 8),
-        ],
+          BalanceSuccess(:final candidates) => _candidate(
+            candidates[_index.clamp(0, candidates.length - 1)],
+          ),
+        },
       ),
-      body: switch (result) {
-        null => const Center(child: CircularProgressIndicator()),
-        BalanceFailure() => const Center(
-          child: Text('출전 인원과 팀 수를 다시 확인해 주세요.'),
-        ),
-        BalanceSuccess(:final candidates) => _candidate(
-          candidates[_index.clamp(0, candidates.length - 1)],
-        ),
-      },
     );
   }
 
@@ -115,28 +129,31 @@ class _LineupResultPageState extends ConsumerState<LineupResultPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          color: theme.colorScheme.surfaceContainerHigh,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              Text(
-                '⚖️ 밸런스 ${b.rounded} / 100',
-                key: const Key('balanceScore'),
-                style: theme.textTheme.titleMedium,
-              ),
-              const SizedBox(width: 8),
-              Text(b.grade.label, style: theme.textTheme.titleSmall),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Text(
-                  '전력 ${b.strength.round()} · 공격 ${b.attack.round()} · '
-                  '수비 ${b.defense.round()} · 포지션 ${b.position.round()}',
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall,
+        CoachTarget(
+          id: 'result.score',
+          child: Container(
+            color: theme.colorScheme.surfaceContainerHigh,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                Text(
+                  '⚖️ 밸런스 ${b.rounded} / 100',
+                  key: const Key('balanceScore'),
+                  style: theme.textTheme.titleMedium,
                 ),
-              ),
-            ],
+                const SizedBox(width: 8),
+                Text(b.grade.label, style: theme.textTheme.titleSmall),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Text(
+                    '전력 ${b.strength.round()} · 공격 ${b.attack.round()} · '
+                    '수비 ${b.defense.round()} · 포지션 ${b.position.round()}',
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
         Expanded(
@@ -147,14 +164,17 @@ class _LineupResultPageState extends ConsumerState<LineupResultPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 for (var t = 0; t < c.lineup.teams.length; t++)
-                  _teamCard(
-                    theme,
-                    t,
-                    c.lineup.teams[t],
-                    b.teams[t],
-                    players,
-                    canSeeStats,
-                    c.lineup.format,
+                  CoachTarget(
+                    id: t == 0 ? 'result.team' : 'result.team$t',
+                    child: _teamCard(
+                      theme,
+                      t,
+                      c.lineup.teams[t],
+                      b.teams[t],
+                      players,
+                      canSeeStats,
+                      c.lineup.format,
+                    ),
                   ),
               ],
             ),
