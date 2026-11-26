@@ -5,7 +5,7 @@ import '../../helpers/deck_factory.dart';
 
 void main() {
   group('PlayerStats', () {
-    test('OVR은 7개 항목 평균', () {
+    test('OVR은 8개 항목 평균 (체력 포함)', () {
       final s = PlayerStats(
         shooting: 5,
         dribbling: 4,
@@ -13,6 +13,7 @@ void main() {
         passing: 2,
         physical: 1,
         creativity: 5,
+        stamina: 3,
         teamwork: 1,
       );
       expect(s.ovr, closeTo(3.0, 1e-9));

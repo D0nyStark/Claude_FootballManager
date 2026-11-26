@@ -42,6 +42,7 @@ Future<String> seedGroup(AppDatabase db, int n) async {
           passing: s(),
           physical: s(),
           creativity: s(),
+          stamina: s(),
           teamwork: s(),
         ),
       ),

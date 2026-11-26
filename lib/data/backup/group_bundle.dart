@@ -6,6 +6,7 @@ import 'package:drift/drift.dart';
 import '../db/app_database.dart';
 import '../../core/models/formation.dart';
 import '../../core/models/group_role.dart';
+import '../../core/models/player_stats.dart';
 
 /// 모임 데이터 묶음 (SPEC §7.2) — 백업 파일(.mug)과 초대 링크가 같은 형식을 쓴다.
 ///
@@ -297,6 +298,15 @@ class BundleService {
           for (final s in _statKeys) s: local?[s] ?? 3,
           'statsSimple': local?['statsSimple'] ?? true,
         };
+      } else if (!data.containsKey('stamina')) {
+        // 체력이 없던 예전 백업(1.0.2 이전): 나머지 7개 평균으로 채운다.
+        data = {
+          ...data,
+          'stamina': PlayerStats.legacyStamina([
+            for (final s in _statKeys)
+              if (s != 'stamina') data[s] as int,
+          ]),
+        };
       }
       final incoming = PlayerRow.fromJson(data);
       _count(
@@ -379,6 +389,7 @@ class BundleService {
     'speed',
     'passing',
     'physical',
+    'stamina',
     'creativity',
     'teamwork',
   ];

@@ -131,7 +131,7 @@ class ScorePicker extends StatelessWidget {
   }
 }
 
-/// 7각형 능력치 레이더 차트 (SPEC F1.3).
+/// 능력치 레이더 차트 (8각형, SPEC F1.3).
 class StatRadarChart extends StatelessWidget {
   const StatRadarChart({super.key, required this.stats, this.size = 180});
 
@@ -176,7 +176,7 @@ class _RadarPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final center = size.center(Offset.zero);
     final radius = size.shortestSide / 2 - 22;
-    const count = 7;
+    final count = Stat.values.length;
     Offset point(int i, double r) {
       final angle = -math.pi / 2 + 2 * math.pi * i / count;
       return center + Offset(math.cos(angle), math.sin(angle)) * r;

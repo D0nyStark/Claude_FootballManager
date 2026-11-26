@@ -150,11 +150,24 @@ class MatchSession {
 
   static Player _playerFromJson(Map<String, Object?> j) {
     final stats = (j['stats'] as List).cast<int>();
+    // 예전 형식(체력 없는 7개, 1.0.2 이전): 슈팅·드리블·스피드·패스·피지컬·창의력·협력.
+    const legacy = [
+      Stat.shooting,
+      Stat.dribbling,
+      Stat.speed,
+      Stat.passing,
+      Stat.physical,
+      Stat.creativity,
+      Stat.teamwork,
+    ];
+    final order = stats.length == legacy.length ? legacy : Stat.values;
     return Player(
       id: j['id'] as String,
       name: j['name'] as String,
       stats: PlayerStats.fromMap({
-        for (var i = 0; i < Stat.values.length; i++) Stat.values[i]: stats[i],
+        for (var i = 0; i < order.length; i++) order[i]: stats[i],
+        if (stats.length == legacy.length)
+          Stat.stamina: PlayerStats.legacyStamina(stats),
       }),
       mainPosition: Position.values.byName(j['main'] as String),
       isGuest: true,

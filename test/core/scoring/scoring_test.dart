@@ -14,16 +14,17 @@ void main() {
         passing: 2,
         physical: 1,
         creativity: 5,
+        stamina: 4,
         teamwork: 2,
       );
       const w = IndexWeights.standard;
       expect(
         w.attackOf(s),
-        closeTo(0.30 * 5 + 0.25 * 4 + 0.25 * 5 + 0.20 * 3, 1e-9),
+        closeTo(0.30 * 5 + 0.25 * 4 + 0.20 * 5 + 0.15 * 3 + 0.10 * 4, 1e-9),
       );
       expect(
         w.defenseOf(s),
-        closeTo(0.35 * 1 + 0.35 * 2 + 0.15 * 3 + 0.15 * 2, 1e-9),
+        closeTo(0.30 * 1 + 0.30 * 2 + 0.15 * 4 + 0.15 * 3 + 0.10 * 2, 1e-9),
       );
     });
 

@@ -51,6 +51,7 @@ List<Player> randomDeck(
         passing: stat(),
         physical: stat(),
         creativity: stat(),
+        stamina: stat(),
         teamwork: stat(),
       ),
       mainPosition: main,

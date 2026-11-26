@@ -29,7 +29,7 @@ class AppDatabase extends _$AppDatabase {
       AppDatabase(driftDatabase(name: 'futsal_team_maker'));
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -40,6 +40,14 @@ class AppDatabase extends _$AppDatabase {
         await m.createTable(groupSettings);
       }
       if (from < 4) await m.addColumn(groups, groups.lastSharedAt);
+      if (from < 5) {
+        await m.addColumn(players, players.stamina);
+        // 예전 선수의 체력 = 나머지 7개 능력치 평균 (OVR이 거의 그대로 유지되게).
+        await customStatement(
+          'UPDATE players SET stamina = CAST(ROUND((shooting + dribbling + speed + '
+          'passing + physical + creativity + teamwork) / 7.0) AS INTEGER)',
+        );
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

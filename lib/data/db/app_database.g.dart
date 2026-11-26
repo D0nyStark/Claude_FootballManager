@@ -878,6 +878,18 @@ class $PlayersTable extends Players with TableInfo<$PlayersTable, PlayerRow> {
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _staminaMeta = const VerificationMeta(
+    'stamina',
+  );
+  @override
+  late final GeneratedColumn<int> stamina = GeneratedColumn<int>(
+    'stamina',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(3),
+  );
   static const VerificationMeta _creativityMeta = const VerificationMeta(
     'creativity',
   );
@@ -1001,6 +1013,7 @@ class $PlayersTable extends Players with TableInfo<$PlayersTable, PlayerRow> {
     speed,
     passing,
     physical,
+    stamina,
     creativity,
     teamwork,
     mainPosition,
@@ -1111,6 +1124,12 @@ class $PlayersTable extends Players with TableInfo<$PlayersTable, PlayerRow> {
       );
     } else if (isInserting) {
       context.missing(_physicalMeta);
+    }
+    if (data.containsKey('stamina')) {
+      context.handle(
+        _staminaMeta,
+        stamina.isAcceptableOrUnknown(data['stamina']!, _staminaMeta),
+      );
     }
     if (data.containsKey('creativity')) {
       context.handle(
@@ -1235,6 +1254,10 @@ class $PlayersTable extends Players with TableInfo<$PlayersTable, PlayerRow> {
         DriftSqlType.int,
         data['${effectivePrefix}physical'],
       )!,
+      stamina: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}stamina'],
+      )!,
       creativity: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}creativity'],
@@ -1301,6 +1324,9 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
   final int speed;
   final int passing;
   final int physical;
+
+  /// 체력 (v5에서 추가 — 예전 선수는 나머지 7개 평균으로 채움).
+  final int stamina;
   final int creativity;
   final int teamwork;
   final Position mainPosition;
@@ -1326,6 +1352,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
     required this.speed,
     required this.passing,
     required this.physical,
+    required this.stamina,
     required this.creativity,
     required this.teamwork,
     required this.mainPosition,
@@ -1360,6 +1387,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
     map['speed'] = Variable<int>(speed);
     map['passing'] = Variable<int>(passing);
     map['physical'] = Variable<int>(physical);
+    map['stamina'] = Variable<int>(stamina);
     map['creativity'] = Variable<int>(creativity);
     map['teamwork'] = Variable<int>(teamwork);
     {
@@ -1397,6 +1425,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
       speed: Value(speed),
       passing: Value(passing),
       physical: Value(physical),
+      stamina: Value(stamina),
       creativity: Value(creativity),
       teamwork: Value(teamwork),
       mainPosition: Value(mainPosition),
@@ -1430,6 +1459,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
       speed: serializer.fromJson<int>(json['speed']),
       passing: serializer.fromJson<int>(json['passing']),
       physical: serializer.fromJson<int>(json['physical']),
+      stamina: serializer.fromJson<int>(json['stamina']),
       creativity: serializer.fromJson<int>(json['creativity']),
       teamwork: serializer.fromJson<int>(json['teamwork']),
       mainPosition: $PlayersTable.$convertermainPosition.fromJson(
@@ -1462,6 +1492,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
       'speed': serializer.toJson<int>(speed),
       'passing': serializer.toJson<int>(passing),
       'physical': serializer.toJson<int>(physical),
+      'stamina': serializer.toJson<int>(stamina),
       'creativity': serializer.toJson<int>(creativity),
       'teamwork': serializer.toJson<int>(teamwork),
       'mainPosition': serializer.toJson<String>(
@@ -1490,6 +1521,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
     int? speed,
     int? passing,
     int? physical,
+    int? stamina,
     int? creativity,
     int? teamwork,
     Position? mainPosition,
@@ -1513,6 +1545,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
     speed: speed ?? this.speed,
     passing: passing ?? this.passing,
     physical: physical ?? this.physical,
+    stamina: stamina ?? this.stamina,
     creativity: creativity ?? this.creativity,
     teamwork: teamwork ?? this.teamwork,
     mainPosition: mainPosition ?? this.mainPosition,
@@ -1540,6 +1573,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
       speed: data.speed.present ? data.speed.value : this.speed,
       passing: data.passing.present ? data.passing.value : this.passing,
       physical: data.physical.present ? data.physical.value : this.physical,
+      stamina: data.stamina.present ? data.stamina.value : this.stamina,
       creativity: data.creativity.present
           ? data.creativity.value
           : this.creativity,
@@ -1576,6 +1610,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
           ..write('speed: $speed, ')
           ..write('passing: $passing, ')
           ..write('physical: $physical, ')
+          ..write('stamina: $stamina, ')
           ..write('creativity: $creativity, ')
           ..write('teamwork: $teamwork, ')
           ..write('mainPosition: $mainPosition, ')
@@ -1604,6 +1639,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
     speed,
     passing,
     physical,
+    stamina,
     creativity,
     teamwork,
     mainPosition,
@@ -1631,6 +1667,7 @@ class PlayerRow extends DataClass implements Insertable<PlayerRow> {
           other.speed == this.speed &&
           other.passing == this.passing &&
           other.physical == this.physical &&
+          other.stamina == this.stamina &&
           other.creativity == this.creativity &&
           other.teamwork == this.teamwork &&
           other.mainPosition == this.mainPosition &&
@@ -1656,6 +1693,7 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
   final Value<int> speed;
   final Value<int> passing;
   final Value<int> physical;
+  final Value<int> stamina;
   final Value<int> creativity;
   final Value<int> teamwork;
   final Value<Position> mainPosition;
@@ -1680,6 +1718,7 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
     this.speed = const Value.absent(),
     this.passing = const Value.absent(),
     this.physical = const Value.absent(),
+    this.stamina = const Value.absent(),
     this.creativity = const Value.absent(),
     this.teamwork = const Value.absent(),
     this.mainPosition = const Value.absent(),
@@ -1705,6 +1744,7 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
     required int speed,
     required int passing,
     required int physical,
+    this.stamina = const Value.absent(),
     required int creativity,
     required int teamwork,
     required Position mainPosition,
@@ -1744,6 +1784,7 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
     Expression<int>? speed,
     Expression<int>? passing,
     Expression<int>? physical,
+    Expression<int>? stamina,
     Expression<int>? creativity,
     Expression<int>? teamwork,
     Expression<String>? mainPosition,
@@ -1769,6 +1810,7 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
       if (speed != null) 'speed': speed,
       if (passing != null) 'passing': passing,
       if (physical != null) 'physical': physical,
+      if (stamina != null) 'stamina': stamina,
       if (creativity != null) 'creativity': creativity,
       if (teamwork != null) 'teamwork': teamwork,
       if (mainPosition != null) 'main_position': mainPosition,
@@ -1796,6 +1838,7 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
     Value<int>? speed,
     Value<int>? passing,
     Value<int>? physical,
+    Value<int>? stamina,
     Value<int>? creativity,
     Value<int>? teamwork,
     Value<Position>? mainPosition,
@@ -1821,6 +1864,7 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
       speed: speed ?? this.speed,
       passing: passing ?? this.passing,
       physical: physical ?? this.physical,
+      stamina: stamina ?? this.stamina,
       creativity: creativity ?? this.creativity,
       teamwork: teamwork ?? this.teamwork,
       mainPosition: mainPosition ?? this.mainPosition,
@@ -1878,6 +1922,9 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
     if (physical.present) {
       map['physical'] = Variable<int>(physical.value);
     }
+    if (stamina.present) {
+      map['stamina'] = Variable<int>(stamina.value);
+    }
     if (creativity.present) {
       map['creativity'] = Variable<int>(creativity.value);
     }
@@ -1929,6 +1976,7 @@ class PlayersCompanion extends UpdateCompanion<PlayerRow> {
           ..write('speed: $speed, ')
           ..write('passing: $passing, ')
           ..write('physical: $physical, ')
+          ..write('stamina: $stamina, ')
           ..write('creativity: $creativity, ')
           ..write('teamwork: $teamwork, ')
           ..write('mainPosition: $mainPosition, ')
@@ -4694,6 +4742,7 @@ typedef $$PlayersTableCreateCompanionBuilder = PlayersCompanion Function({
   required int speed,
   required int passing,
   required int physical,
+  Value<int> stamina,
   required int creativity,
   required int teamwork,
   required Position mainPosition,
@@ -4719,6 +4768,7 @@ typedef $$PlayersTableUpdateCompanionBuilder = PlayersCompanion Function({
   Value<int> speed,
   Value<int> passing,
   Value<int> physical,
+  Value<int> stamina,
   Value<int> creativity,
   Value<int> teamwork,
   Value<Position> mainPosition,
@@ -4820,6 +4870,11 @@ class $$PlayersTableFilterComposer
 
   ColumnFilters<int> get physical => $composableBuilder(
     column: $table.physical,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get stamina => $composableBuilder(
+    column: $table.stamina,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4962,6 +5017,11 @@ class $$PlayersTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get stamina => $composableBuilder(
+    column: $table.stamina,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get creativity => $composableBuilder(
     column: $table.creativity,
     builder: (column) => ColumnOrderings(column),
@@ -5079,6 +5139,9 @@ class $$PlayersTableAnnotationComposer
   GeneratedColumn<int> get physical =>
       $composableBuilder(column: $table.physical, builder: (column) => column);
 
+  GeneratedColumn<int> get stamina =>
+      $composableBuilder(column: $table.stamina, builder: (column) => column);
+
   GeneratedColumn<int> get creativity => $composableBuilder(
     column: $table.creativity,
     builder: (column) => column,
@@ -5180,6 +5243,7 @@ class $$PlayersTableTableManager
                 Value<int> speed = const Value.absent(),
                 Value<int> passing = const Value.absent(),
                 Value<int> physical = const Value.absent(),
+                Value<int> stamina = const Value.absent(),
                 Value<int> creativity = const Value.absent(),
                 Value<int> teamwork = const Value.absent(),
                 Value<Position> mainPosition = const Value.absent(),
@@ -5204,6 +5268,7 @@ class $$PlayersTableTableManager
                 speed: speed,
                 passing: passing,
                 physical: physical,
+                stamina: stamina,
                 creativity: creativity,
                 teamwork: teamwork,
                 mainPosition: mainPosition,
@@ -5230,6 +5295,7 @@ class $$PlayersTableTableManager
                 required int speed,
                 required int passing,
                 required int physical,
+                Value<int> stamina = const Value.absent(),
                 required int creativity,
                 required int teamwork,
                 required Position mainPosition,
@@ -5254,6 +5320,7 @@ class $$PlayersTableTableManager
                 speed: speed,
                 passing: passing,
                 physical: physical,
+                stamina: stamina,
                 creativity: creativity,
                 teamwork: teamwork,
                 mainPosition: mainPosition,

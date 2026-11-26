@@ -5,6 +5,9 @@ enum Stat {
   speed('스피드'),
   passing('패스'),
   physical('피지컬'),
+
+  /// 활동량·지구력.
+  stamina('체력'),
   creativity('창의력'),
 
   /// 수비 가담 + 협력.
@@ -15,7 +18,7 @@ enum Stat {
   final String label;
 }
 
-/// 선수 한 명의 7개 능력치.
+/// 선수 한 명의 8개 능력치.
 class PlayerStats {
   PlayerStats({
     required int shooting,
@@ -23,19 +26,22 @@ class PlayerStats {
     required int speed,
     required int passing,
     required int physical,
+    required int stamina,
     required int creativity,
     required int teamwork,
   }) : _values = List.unmodifiable([
+         // Stat 순서와 같아야 한다.
          _check(shooting),
          _check(dribbling),
          _check(speed),
          _check(passing),
          _check(physical),
+         _check(stamina),
          _check(creativity),
          _check(teamwork),
        ]);
 
-  /// 빠른 입력: 7개 항목을 모두 같은 값으로 채운다.
+  /// 빠른 입력: 8개 항목을 모두 같은 값으로 채운다.
   PlayerStats.uniform(int value)
     : _values = List.unmodifiable(
         List.filled(Stat.values.length, _check(value)),
@@ -55,7 +61,7 @@ class PlayerStats {
 
   int operator [](Stat stat) => _values[stat.index];
 
-  /// 종합 능력치 OVR = 7개 항목 평균 (1.0~5.0).
+  /// 종합 능력치 OVR = 8개 항목 평균 (1.0~5.0).
   double get ovr => _values.reduce((a, b) => a + b) / _values.length;
 
   Map<Stat, int> toMap() => {for (final s in Stat.values) s: this[s]};
@@ -83,4 +89,13 @@ class PlayerStats {
 
   @override
   String toString() => 'PlayerStats(${_values.join(',')})';
+
+  /// 체력이 없던 예전 데이터(7개 항목)의 체력 기본값: 나머지 7개 평균(반올림).
+  static int legacyStamina(Iterable<int> sevenStats) {
+    final list = sevenStats.toList();
+    return (list.reduce((a, b) => a + b) / list.length).round().clamp(
+      minValue,
+      maxValue,
+    );
+  }
 }

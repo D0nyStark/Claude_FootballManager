@@ -4,20 +4,22 @@ import '../models/player_stats.dart';
 class IndexWeights {
   const IndexWeights({required this.attack, required this.defense});
 
-  /// 공격력 = 0.30·슈팅 + 0.25·드리블 + 0.25·창의력 + 0.20·스피드
-  /// 수비력 = 0.35·피지컬 + 0.35·협력(수비 가담) + 0.15·스피드 + 0.15·패스
+  /// 공격력 = 0.30·슈팅 + 0.25·드리블 + 0.20·창의력 + 0.15·스피드 + 0.10·체력
+  /// 수비력 = 0.30·피지컬 + 0.30·협력(수비 가담) + 0.15·체력 + 0.15·스피드 + 0.10·패스
   static const IndexWeights standard = IndexWeights(
     attack: {
       Stat.shooting: 0.30,
       Stat.dribbling: 0.25,
-      Stat.creativity: 0.25,
-      Stat.speed: 0.20,
+      Stat.creativity: 0.20,
+      Stat.speed: 0.15,
+      Stat.stamina: 0.10,
     },
     defense: {
-      Stat.physical: 0.35,
-      Stat.teamwork: 0.35,
+      Stat.physical: 0.30,
+      Stat.teamwork: 0.30,
+      Stat.stamina: 0.15,
       Stat.speed: 0.15,
-      Stat.passing: 0.15,
+      Stat.passing: 0.10,
     },
   );
 

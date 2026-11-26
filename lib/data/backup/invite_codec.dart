@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io' show ZLibCodec;
 import 'dart:typed_data';
 
+import '../../core/models/player_stats.dart';
 import 'group_bundle.dart';
 
 /// 초대 링크용 짧은 형식 (SPEC F13, §7.2) — "MUG2:" + base64url(deflate(압축 JSON)).
@@ -26,6 +27,8 @@ abstract final class InviteCodec {
     'physical',
     'creativity',
     'teamwork',
+    // 체력은 뒤에 붙인다: 예전 7자리 링크(1.0.2 이전)도 앞 7자리는 그대로 읽힌다.
+    'stamina',
   ];
   static const _positions = ['fixo', 'ala', 'pivo'];
   static const _slots = ['gk', 'fixo1', 'fixo2', 'alaLeft', 'alaRight', 'pivo'];
@@ -192,9 +195,7 @@ abstract final class InviteCodec {
             'name': p[1],
             'nickname': p[2] == 0 ? null : p[2],
             'memberType': p[3] == 1 ? 'core' : 'regular',
-            if (withStats && p[4] is String)
-              for (final (k, s) in _stats.indexed)
-                s: int.parse((p[4] as String)[k]),
+            if (withStats && p[4] is String) ..._decodeStats(p[4] as String),
             'mainPosition': _positions[p[5] as int],
             'subPositions': [
               for (final (k, pos) in _positions.indexed)
@@ -290,6 +291,17 @@ abstract final class InviteCodec {
       'updatedBy': from,
       'deletedAt': deleted(h[8] as int),
     };
+  }
+
+  /// "33333333" → 능력치. 7자리(체력 없음)는 체력을 나머지 평균으로 채운다.
+  static Map<String, int> _decodeStats(String digits) {
+    final values = [for (final c in digits.split('')) int.parse(c)];
+    final map = {
+      for (var k = 0; k < values.length && k < _stats.length; k++)
+        _stats[k]: values[k],
+    };
+    map['stamina'] ??= PlayerStats.legacyStamina(values.take(7));
+    return map;
   }
 
   // ───────────────────────── uuid 줄이기 ─────────────────────────

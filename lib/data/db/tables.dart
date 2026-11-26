@@ -53,6 +53,9 @@ class Players extends Table with SyncColumns {
   IntColumn get speed => integer()();
   IntColumn get passing => integer()();
   IntColumn get physical => integer()();
+
+  /// 체력 (v5에서 추가 — 예전 선수는 나머지 7개 평균으로 채움).
+  IntColumn get stamina => integer().withDefault(const Constant(3))();
   IntColumn get creativity => integer()();
   IntColumn get teamwork => integer()();
   TextColumn get mainPosition => textEnum<Position>()();

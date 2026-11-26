@@ -266,7 +266,12 @@ class _PlayerEditorState extends ConsumerState<PlayerEditor> {
                 SizedBox(
                   width: 72,
                   child: Tooltip(
-                    message: s == Stat.teamwork ? '수비 가담 + 팀플레이' : '',
+                    message: switch (s) {
+                      Stat.teamwork => '수비 가담 + 팀플레이',
+                      Stat.stamina => '활동량·지구력',
+                      Stat.physical => '몸싸움·볼 경합',
+                      _ => '',
+                    },
                     child: Text(s.label),
                   ),
                 ),
