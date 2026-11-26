@@ -40,7 +40,12 @@ class TeamBalancer {
   static const double repeatBenchPenalty = 0.05;
 
   BalanceResult balance(BalanceRequest request) {
-    final ctx = _Context.build(request, indexWeights, balanceWeights);
+    // 모임 설정의 밸런스 비중이 요청에 있으면 그것을 쓴다 (SPEC F10).
+    final ctx = _Context.build(
+      request,
+      indexWeights,
+      request.balanceWeights ?? balanceWeights,
+    );
     if (ctx.issues.isNotEmpty) return BalanceFailure(ctx.issues);
 
     final repWeight = ctx.repetition.isEmpty

@@ -17,6 +17,16 @@ import 'half_court.dart';
 
 import 'package:flutter/services.dart';
 
+import 'dart:ui' as ui;
+
+import 'package:flutter/rendering.dart';
+
+import '../../data/history/confirmed_lineup.dart';
+import '../../data/repositories/player_repository.dart';
+import '../share/share_service.dart';
+import '../share/share_sheet.dart';
+import '../share/share_text.dart';
+
 /// 구장 화면 (SPEC F4·F5·F7, §8.4): 반쪽 구장을 나란히 놓고 포지션 원에 선수를 배치한다.
 ///
 /// [⚡ 자동 편성]을 누르면 왼쪽 출전 덱의 선수들이 포지션 원으로 날아 들어간다.
@@ -49,7 +59,14 @@ class _PitchPageState extends ConsumerState<PitchPage>
   };
   late final LineupEvaluator _evaluator = LineupEvaluator(
     widget.request.players,
+    balanceWeights: widget.request.balanceWeights ?? BalanceWeights.standard,
   );
+
+  /// 구장 이미지 공유용 캡처 영역 (점수 헤더 + 구장).
+  final _captureKey = GlobalKey();
+
+  /// 이번 화면에서 확정한 이력 id (다시 확정하면 같은 항목을 고친다).
+  String? _confirmedId;
 
   List<LineupCandidate> _candidates = const [];
   int _index = 0;
@@ -127,6 +144,7 @@ class _PitchPageState extends ConsumerState<PitchPage>
         repeatAvoidance: r.repeatAvoidance,
         avoidLineups: [..._shown],
         seed: _seed,
+        balanceWeights: r.balanceWeights,
         pinnedTeams: pinned.teams,
         pinnedSlots: pinned.slots,
       ),
@@ -323,56 +341,116 @@ class _PitchPageState extends ConsumerState<PitchPage>
       steps: () => TutorialSteps.pitch,
       child: Scaffold(
         body: SafeArea(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              CoachTarget(
-                id: 'pitch.score',
-                child: BalanceHeader(
-                  balance: balance,
-                  previous: _previousScore,
-                  candidateCount: _candidates.length,
-                  selected: _index,
-                  onSelect: _busy ? null : _select,
-                  onBack: () => Navigator.of(context).maybePop(),
-                ),
-              ),
-              Expanded(
-                child: Stack(
-                  key: _stackKey,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        CoachTarget(
-                          id: 'pitch.deck',
-                          child: _deckPanel(lineup),
-                        ),
-                        const VerticalDivider(width: 1),
-                        Expanded(child: _courts(lineup, balance)),
-                        const VerticalDivider(width: 1),
-                        _rail(),
-                      ],
+          child: RepaintBoundary(
+            key: _captureKey,
+            child: ColoredBox(
+              color: Theme.of(context).colorScheme.surface,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  CoachTarget(
+                    id: 'pitch.score',
+                    child: BalanceHeader(
+                      balance: balance,
+                      previous: _previousScore,
+                      candidateCount: _candidates.length,
+                      selected: _index,
+                      onSelect: _busy ? null : _select,
+                      onBack: () => Navigator.of(context).maybePop(),
                     ),
-                    if (_flying)
-                      Positioned.fill(
-                        child: IgnorePointer(
-                          child: AnimatedBuilder(
-                            animation: _fly,
-                            builder: (context, _) => Stack(
-                              children: [for (final f in _flights) _flight(f)],
+                  ),
+                  Expanded(
+                    child: Stack(
+                      key: _stackKey,
+                      children: [
+                        Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            CoachTarget(
+                              id: 'pitch.deck',
+                              child: _deckPanel(lineup),
+                            ),
+                            const VerticalDivider(width: 1),
+                            Expanded(child: _courts(lineup, balance)),
+                            const VerticalDivider(width: 1),
+                            _rail(),
+                          ],
+                        ),
+                        if (_flying)
+                          Positioned.fill(
+                            child: IgnorePointer(
+                              child: AnimatedBuilder(
+                                animation: _fly,
+                                builder: (context, _) => Stack(
+                                  children: [
+                                    for (final f in _flights) _flight(f),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                      ),
-                  ],
-                ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ),
       ),
     );
+  }
+
+  // ───────────────────────── 확정·공유 (SPEC F8) ─────────────────────────
+
+  Future<void> _confirm() async {
+    final lineup = _current;
+    if (lineup == null || _busy) return;
+    final entry = ConfirmedLineup(
+      id: _confirmedId ??= PlayerRepository.newId(),
+      confirmedAt: DateTime.now(),
+      balanceScore: _evaluator.evaluate(lineup).total,
+      lineup: lineup,
+      teamNames: _names.take(_teamCount).toList(),
+      teamColors: [for (final c in _colors.take(_teamCount)) c.toARGB32()],
+      playerNames: {for (final p in _players.values) p.id: p.name},
+    );
+    await ref.read(historyRepositoryProvider).save(widget.group.id, entry);
+    // 오늘 준비는 끝났으니 작성 중인 덱 임시 저장을 비운다.
+    await ref.read(sessionRepositoryProvider).clear(widget.group.id);
+    if (!mounted) return;
+    setState(() {}); // [확정] → [다시 공유]
+    await showShareSheet(
+      context,
+      service: ref.read(shareServiceProvider),
+      title: '확정했어요 · 단톡방에 공유하세요',
+      canIncludeStats: _canSeeStats,
+      text: (withStats) => _shareText(lineup, withStats),
+      image: () => _captureImage(),
+    );
+  }
+
+  String _shareText(Lineup lineup, bool withStats) {
+    final b = _evaluator.evaluate(lineup);
+    return buildShareText(
+      lineup: lineup,
+      teamNames: _names,
+      nameOf: (id) => _players[id]?.name ?? '?',
+      date: DateTime.now(),
+      balanceScore: b.rounded,
+      groupName: widget.group.name,
+      teamOvr: withStats ? [for (final t in b.teams) t.ovr] : null,
+    );
+  }
+
+  Future<Uint8List?> _captureImage() async {
+    final boundary =
+        _captureKey.currentContext?.findRenderObject()
+            as RenderRepaintBoundary?;
+    if (boundary == null) return null;
+    final image = await boundary.toImage(pixelRatio: 2);
+    final data = await image.toByteData(format: ui.ImageByteFormat.png);
+    return data?.buffer.asUint8List();
   }
 
   Widget _flight(_Flight f) {
@@ -581,12 +659,15 @@ class _PitchPageState extends ConsumerState<PitchPage>
             ),
           ),
           const SizedBox(height: 4),
-          // 확정·공유는 M6에서 구현.
-          const _RailButton(
-            icon: Icons.check_circle_outline,
-            label: '확정',
-            filled: false,
-            onPressed: null,
+          CoachTarget(
+            id: 'pitch.confirm',
+            child: _RailButton(
+              key: const Key('confirm'),
+              icon: Icons.check_circle,
+              label: _confirmedId == null ? '확정' : '다시 공유',
+              filled: arranged,
+              onPressed: arranged && !_busy ? _confirm : null,
+            ),
           ),
         ],
       ),

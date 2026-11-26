@@ -7,6 +7,7 @@ import '../../data/repositories/group_repository.dart';
 import '../match/deck_page.dart';
 import '../onboarding/onboarding_page.dart';
 import '../tutorial/coach_marks.dart';
+import '../history/history_page.dart';
 
 /// 모임 홈: 오늘 매치 형식 선택 (SPEC F0, §8.2-1).
 class GroupHomeView extends ConsumerWidget {
@@ -18,6 +19,7 @@ class GroupHomeView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final playerCount = ref.watch(playersProvider(group.id)).value?.length;
+    final last = ref.watch(historyProvider(group.id)).value?.firstOrNull;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Column(
@@ -92,6 +94,21 @@ class GroupHomeView extends ConsumerWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              if (last != null) ...[
+                OutlinedButton.icon(
+                  key: const Key('lastLineup'),
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => HistoryPage(group: group),
+                    ),
+                  ),
+                  icon: const Icon(Icons.history),
+                  label: Text(
+                    '마지막 편성 ${last.confirmedAt.month}/${last.confirmedAt.day}',
+                  ),
+                ),
+                const SizedBox(width: 12),
+              ],
               // 초대·변경 공유는 M6.5에서 구현.
               OutlinedButton.icon(
                 onPressed: null,

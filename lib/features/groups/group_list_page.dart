@@ -9,6 +9,7 @@ import '../onboarding/onboarding_page.dart';
 import '../tutorial/coach_marks.dart';
 import '../tutorial/tutorial.dart';
 import '../tutorial/tutorial_steps.dart';
+import '../backup/backup_actions.dart';
 
 /// 첫 화면: 모임 목록 (SPEC F11, §8.2).
 class GroupListPage extends ConsumerStatefulWidget {
@@ -49,6 +50,12 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
         appBar: AppBar(
           title: const Text('풋살 팀메이커'),
           actions: [
+            IconButton(
+              key: const Key('importBackupList'),
+              tooltip: '백업 가져오기',
+              icon: const Icon(Icons.file_open),
+              onPressed: () => importGroupBackup(context, ref),
+            ),
             CoachTarget(
               id: 'groups.join',
               child: TextButton.icon(

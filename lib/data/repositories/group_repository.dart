@@ -158,6 +158,12 @@ class GroupRepository {
       _db.sessionDrafts,
     )..where((d) => d.groupId.equals(id))).go();
     await (_db.delete(
+      _db.lineupHistories,
+    )..where((h) => h.groupId.equals(id))).go();
+    await (_db.delete(
+      _db.groupSettings,
+    )..where((s) => s.groupId.equals(id))).go();
+    await (_db.delete(
       _db.playerConstraints,
     )..where((c) => c.groupId.equals(id))).go();
     await (_db.delete(_db.players)..where((p) => p.groupId.equals(id))).go();

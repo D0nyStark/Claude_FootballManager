@@ -6,6 +6,7 @@ import '../../core/balancer/balancer.dart';
 import '../../core/models/models.dart';
 import '../../data/repositories/session_repository.dart';
 import '../../data/session/match_session.dart';
+import '../../core/scoring/weights.dart';
 
 /// 출전 덱·팀 설정 화면의 상태. 바뀔 때마다 기기에 저장한다 (SPEC F2.5).
 class MatchSessionController extends ChangeNotifier {
@@ -166,6 +167,8 @@ BalanceRequest buildBalanceRequest({
   int seed = 0,
   List<Lineup> avoid = const [],
   List<LineupHistoryEntry> history = const [],
+  RepeatAvoidance repeatAvoidance = RepeatAvoidance.medium,
+  BalanceWeights? weights,
 }) => BalanceRequest(
   players: session.deck(registered),
   format: session.format,
@@ -176,6 +179,8 @@ BalanceRequest buildBalanceRequest({
       : const {},
   constraints: [...groupConstraints, ...session.dayConstraints],
   history: history,
+  repeatAvoidance: repeatAvoidance,
+  balanceWeights: weights,
   avoidLineups: avoid,
   seed: seed,
 );

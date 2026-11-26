@@ -10,6 +10,9 @@ import 'db/app_database.dart';
 import 'repositories/group_repository.dart';
 import 'repositories/player_repository.dart';
 import 'repositories/session_repository.dart';
+import 'repositories/history_repository.dart';
+import 'repositories/settings_repository.dart';
+import 'history/confirmed_lineup.dart';
 
 /// main()에서 연 데이터베이스로 덮어쓴다.
 final databaseProvider = Provider<AppDatabase>(
@@ -60,3 +63,22 @@ final balancerRunnerProvider =
       (ref) =>
           (request) => Isolate.run(() => const TeamBalancer().balance(request)),
     );
+
+final historyRepositoryProvider = Provider(
+  (ref) => HistoryRepository(
+    ref.watch(databaseProvider),
+    ref.watch(deviceIdProvider),
+  ),
+);
+
+final historyProvider = StreamProvider.family<List<ConfirmedLineup>, String>(
+  (ref, groupId) => ref.watch(historyRepositoryProvider).watch(groupId),
+);
+
+final settingsRepositoryProvider = Provider(
+  (ref) => SettingsRepository(ref.watch(databaseProvider)),
+);
+
+final preferencesProvider = StreamProvider.family<GroupPreferences, String>(
+  (ref, groupId) => ref.watch(settingsRepositoryProvider).watch(groupId),
+);

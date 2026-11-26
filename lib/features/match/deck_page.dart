@@ -40,9 +40,18 @@ class _DeckPageState extends ConsumerState<DeckPage> {
   Future<void> _load() async {
     final repo = ref.read(sessionRepositoryProvider);
     final saved = await repo.load(widget.group.id);
-    final initial = (saved ?? MatchSession(format: widget.format)).copyWith(
-      format: widget.format,
-    );
+    // 새로 시작하면 모임 설정의 기본 팀 수·키퍼 방식으로 (SPEC F10).
+    final prefs = await ref
+        .read(settingsRepositoryProvider)
+        .load(widget.group.id);
+    final initial =
+        (saved ??
+                MatchSession(
+                  format: widget.format,
+                  teamCount: prefs.defaultTeamCount,
+                  keeperMode: prefs.defaultKeeperMode,
+                ))
+            .copyWith(format: widget.format);
     if (!mounted) return;
     setState(
       () => _controller = MatchSessionController(

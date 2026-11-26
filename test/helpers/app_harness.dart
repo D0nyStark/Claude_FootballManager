@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:drift/drift.dart' show driftRuntimeOptions;
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_riverpod/misc.dart' show Override;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:futsalteammaker/app.dart';
 import 'package:futsalteammaker/core/balancer/balancer.dart';
@@ -10,6 +11,30 @@ import 'package:futsalteammaker/data/db/app_database.dart';
 import 'package:futsalteammaker/data/providers.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:futsalteammaker/features/tutorial/tutorial.dart';
+import 'package:futsalteammaker/features/share/share_service.dart';
+
+/// 공유 시트·클립보드 대신 기록만 한다.
+class FakeShareService extends ShareService {
+  final List<String> texts = [];
+  final List<(String, List<int>)> files = [];
+  int images = 0;
+
+  @override
+  Future<void> copyText(String text) async => texts.add(text);
+
+  @override
+  Future<void> shareText(String text) async => texts.add(text);
+
+  @override
+  Future<void> shareImage(List<int> png, {String? text}) async => images++;
+
+  @override
+  Future<void> shareFile(List<int> bytes, String fileName) async =>
+      files.add((fileName, bytes));
+}
+
+/// 테스트마다 새로 만든다 ([pumpApp]이 초기화).
+FakeShareService fakeShare = FakeShareService();
 
 /// 가로 폰 (800×360dp).
 const landscapePhone = Size(800, 360);
@@ -21,8 +46,10 @@ Future<AppDatabase> pumpApp(
   Widget? home,
   Size size = landscapePhone,
   bool tutorials = false,
+  List<Override> overrides = const [],
 }) async {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
+  fakeShare = FakeShareService();
   tester.view.physicalSize = size * 2;
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.reset);
@@ -30,10 +57,14 @@ Future<AppDatabase> pumpApp(
   final database = db ?? AppDatabase(NativeDatabase.memory());
   await tester.pumpWidget(
     ProviderScope(
+      // 한 테스트에서 앱을 다시 띄울 때(다른 기기 흉내) 새 범위를 쓴다.
+      key: UniqueKey(),
       overrides: [
         databaseProvider.overrideWithValue(database),
         deviceIdProvider.overrideWithValue('test-device'),
         tutorialEnabledProvider.overrideWithValue(tutorials),
+        shareServiceProvider.overrideWithValue(fakeShare),
+        ...overrides,
         // 테스트에서는 isolate 없이 바로 계산 (가짜 시간과 충돌 방지).
         balancerRunnerProvider.overrideWithValue(
           (request) async => const TeamBalancer().balance(request),

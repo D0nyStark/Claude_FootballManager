@@ -103,3 +103,32 @@ class SessionDrafts extends Table {
   @override
   Set<Column> get primaryKey => {groupId};
 }
+
+/// 확정 편성 이력 (모임별 최근 3개, SPEC §7 LineupHistory). 반복 회피·마지막 편성 보기용.
+@DataClassName('LineupHistoryRow')
+class LineupHistories extends Table with SyncColumns {
+  TextColumn get id => text()();
+  TextColumn get groupId =>
+      text().references(Groups, #id, onDelete: KeyAction.cascade)();
+  DateTimeColumn get confirmedAt => dateTime()();
+  RealColumn get balanceScore => real()();
+
+  /// 편성 전체 (형식·팀별 이름/색/자리/후보/키퍼) JSON.
+  TextColumn get json => text()();
+
+  @override
+  Set<Column> get primaryKey => {id};
+}
+
+/// 모임 설정 (모임별 key-value, 공유 대상 — SPEC F10).
+@DataClassName('GroupSettingRow')
+class GroupSettings extends Table {
+  TextColumn get groupId =>
+      text().references(Groups, #id, onDelete: KeyAction.cascade)();
+  TextColumn get key => text()();
+  TextColumn get value => text()();
+  DateTimeColumn get updatedAt => dateTime()();
+
+  @override
+  Set<Column> get primaryKey => {groupId, key};
+}

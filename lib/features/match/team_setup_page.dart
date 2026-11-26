@@ -13,6 +13,7 @@ import 'team_colors.dart';
 import '../tutorial/coach_marks.dart';
 import '../tutorial/tutorial.dart';
 import '../tutorial/tutorial_steps.dart';
+import '../../data/repositories/settings_repository.dart';
 
 /// 팀 설정 (SPEC F3, §8.5): 형식 · 팀 수 [− n +] · 키퍼 모드 · 당일 제약.
 class TeamSetupPage extends ConsumerWidget {
@@ -33,6 +34,11 @@ class TeamSetupPage extends ConsumerWidget {
         final registered = ref.watch(playersProvider(group.id)).value ?? [];
         final groupConstraints =
             ref.watch(constraintsProvider(group.id)).value ?? [];
+        // 반복 조합 회피: 최근 확정 편성 (SPEC §6.6), 모임 설정 (SPEC F10).
+        final history = ref.watch(historyProvider(group.id)).value ?? [];
+        final prefs =
+            ref.watch(preferencesProvider(group.id)).value ??
+            const GroupPreferences();
         final session = controller.session;
         final deck = session.deck(registered);
         return TutorialHost(
@@ -70,6 +76,12 @@ class TeamSetupPage extends ConsumerWidget {
                                       session: session,
                                       registered: registered,
                                       groupConstraints: groupConstraints,
+                                      history: [
+                                        for (final h in history)
+                                          h.toHistoryEntry(),
+                                      ],
+                                      repeatAvoidance: prefs.repeatAvoidance,
+                                      weights: prefs.weights,
                                     ),
                                   ),
                                 ),

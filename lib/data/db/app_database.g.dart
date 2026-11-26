@@ -2887,6 +2887,847 @@ class SessionDraftsCompanion extends UpdateCompanion<SessionDraftRow> {
   }
 }
 
+class $LineupHistoriesTable extends LineupHistories
+    with TableInfo<$LineupHistoriesTable, LineupHistoryRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LineupHistoriesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedByMeta = const VerificationMeta(
+    'updatedBy',
+  );
+  @override
+  late final GeneratedColumn<String> updatedBy = GeneratedColumn<String>(
+    'updated_by',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _deletedAtMeta = const VerificationMeta(
+    'deletedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> deletedAt = GeneratedColumn<DateTime>(
+    'deleted_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES "groups" (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _confirmedAtMeta = const VerificationMeta(
+    'confirmedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> confirmedAt = GeneratedColumn<DateTime>(
+    'confirmed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _balanceScoreMeta = const VerificationMeta(
+    'balanceScore',
+  );
+  @override
+  late final GeneratedColumn<double> balanceScore = GeneratedColumn<double>(
+    'balance_score',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _jsonMeta = const VerificationMeta('json');
+  @override
+  late final GeneratedColumn<String> json = GeneratedColumn<String>(
+    'json',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    updatedAt,
+    updatedBy,
+    deletedAt,
+    id,
+    groupId,
+    confirmedAt,
+    balanceScore,
+    json,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'lineup_histories';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<LineupHistoryRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    if (data.containsKey('updated_by')) {
+      context.handle(
+        _updatedByMeta,
+        updatedBy.isAcceptableOrUnknown(data['updated_by']!, _updatedByMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedByMeta);
+    }
+    if (data.containsKey('deleted_at')) {
+      context.handle(
+        _deletedAtMeta,
+        deletedAt.isAcceptableOrUnknown(data['deleted_at']!, _deletedAtMeta),
+      );
+    }
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('confirmed_at')) {
+      context.handle(
+        _confirmedAtMeta,
+        confirmedAt.isAcceptableOrUnknown(
+          data['confirmed_at']!,
+          _confirmedAtMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_confirmedAtMeta);
+    }
+    if (data.containsKey('balance_score')) {
+      context.handle(
+        _balanceScoreMeta,
+        balanceScore.isAcceptableOrUnknown(
+          data['balance_score']!,
+          _balanceScoreMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_balanceScoreMeta);
+    }
+    if (data.containsKey('json')) {
+      context.handle(
+        _jsonMeta,
+        json.isAcceptableOrUnknown(data['json']!, _jsonMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_jsonMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  LineupHistoryRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return LineupHistoryRow(
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+      updatedBy: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}updated_by'],
+      )!,
+      deletedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}deleted_at'],
+      ),
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      confirmedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}confirmed_at'],
+      )!,
+      balanceScore: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}balance_score'],
+      )!,
+      json: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}json'],
+      )!,
+    );
+  }
+
+  @override
+  $LineupHistoriesTable createAlias(String alias) {
+    return $LineupHistoriesTable(attachedDatabase, alias);
+  }
+}
+
+class LineupHistoryRow extends DataClass
+    implements Insertable<LineupHistoryRow> {
+  final DateTime updatedAt;
+  final String updatedBy;
+  final DateTime? deletedAt;
+  final String id;
+  final String groupId;
+  final DateTime confirmedAt;
+  final double balanceScore;
+
+  /// 편성 전체 (형식·팀별 이름/색/자리/후보/키퍼) JSON.
+  final String json;
+  const LineupHistoryRow({
+    required this.updatedAt,
+    required this.updatedBy,
+    this.deletedAt,
+    required this.id,
+    required this.groupId,
+    required this.confirmedAt,
+    required this.balanceScore,
+    required this.json,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    map['updated_by'] = Variable<String>(updatedBy);
+    if (!nullToAbsent || deletedAt != null) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt);
+    }
+    map['id'] = Variable<String>(id);
+    map['group_id'] = Variable<String>(groupId);
+    map['confirmed_at'] = Variable<DateTime>(confirmedAt);
+    map['balance_score'] = Variable<double>(balanceScore);
+    map['json'] = Variable<String>(json);
+    return map;
+  }
+
+  LineupHistoriesCompanion toCompanion(bool nullToAbsent) {
+    return LineupHistoriesCompanion(
+      updatedAt: Value(updatedAt),
+      updatedBy: Value(updatedBy),
+      deletedAt: deletedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(deletedAt),
+      id: Value(id),
+      groupId: Value(groupId),
+      confirmedAt: Value(confirmedAt),
+      balanceScore: Value(balanceScore),
+      json: Value(json),
+    );
+  }
+
+  factory LineupHistoryRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return LineupHistoryRow(
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+      updatedBy: serializer.fromJson<String>(json['updatedBy']),
+      deletedAt: serializer.fromJson<DateTime?>(json['deletedAt']),
+      id: serializer.fromJson<String>(json['id']),
+      groupId: serializer.fromJson<String>(json['groupId']),
+      confirmedAt: serializer.fromJson<DateTime>(json['confirmedAt']),
+      balanceScore: serializer.fromJson<double>(json['balanceScore']),
+      json: serializer.fromJson<String>(json['json']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+      'updatedBy': serializer.toJson<String>(updatedBy),
+      'deletedAt': serializer.toJson<DateTime?>(deletedAt),
+      'id': serializer.toJson<String>(id),
+      'groupId': serializer.toJson<String>(groupId),
+      'confirmedAt': serializer.toJson<DateTime>(confirmedAt),
+      'balanceScore': serializer.toJson<double>(balanceScore),
+      'json': serializer.toJson<String>(json),
+    };
+  }
+
+  LineupHistoryRow copyWith({
+    DateTime? updatedAt,
+    String? updatedBy,
+    Value<DateTime?> deletedAt = const Value.absent(),
+    String? id,
+    String? groupId,
+    DateTime? confirmedAt,
+    double? balanceScore,
+    String? json,
+  }) => LineupHistoryRow(
+    updatedAt: updatedAt ?? this.updatedAt,
+    updatedBy: updatedBy ?? this.updatedBy,
+    deletedAt: deletedAt.present ? deletedAt.value : this.deletedAt,
+    id: id ?? this.id,
+    groupId: groupId ?? this.groupId,
+    confirmedAt: confirmedAt ?? this.confirmedAt,
+    balanceScore: balanceScore ?? this.balanceScore,
+    json: json ?? this.json,
+  );
+  LineupHistoryRow copyWithCompanion(LineupHistoriesCompanion data) {
+    return LineupHistoryRow(
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+      updatedBy: data.updatedBy.present ? data.updatedBy.value : this.updatedBy,
+      deletedAt: data.deletedAt.present ? data.deletedAt.value : this.deletedAt,
+      id: data.id.present ? data.id.value : this.id,
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      confirmedAt: data.confirmedAt.present
+          ? data.confirmedAt.value
+          : this.confirmedAt,
+      balanceScore: data.balanceScore.present
+          ? data.balanceScore.value
+          : this.balanceScore,
+      json: data.json.present ? data.json.value : this.json,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LineupHistoryRow(')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('confirmedAt: $confirmedAt, ')
+          ..write('balanceScore: $balanceScore, ')
+          ..write('json: $json')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    updatedAt,
+    updatedBy,
+    deletedAt,
+    id,
+    groupId,
+    confirmedAt,
+    balanceScore,
+    json,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is LineupHistoryRow &&
+          other.updatedAt == this.updatedAt &&
+          other.updatedBy == this.updatedBy &&
+          other.deletedAt == this.deletedAt &&
+          other.id == this.id &&
+          other.groupId == this.groupId &&
+          other.confirmedAt == this.confirmedAt &&
+          other.balanceScore == this.balanceScore &&
+          other.json == this.json);
+}
+
+class LineupHistoriesCompanion extends UpdateCompanion<LineupHistoryRow> {
+  final Value<DateTime> updatedAt;
+  final Value<String> updatedBy;
+  final Value<DateTime?> deletedAt;
+  final Value<String> id;
+  final Value<String> groupId;
+  final Value<DateTime> confirmedAt;
+  final Value<double> balanceScore;
+  final Value<String> json;
+  final Value<int> rowid;
+  const LineupHistoriesCompanion({
+    this.updatedAt = const Value.absent(),
+    this.updatedBy = const Value.absent(),
+    this.deletedAt = const Value.absent(),
+    this.id = const Value.absent(),
+    this.groupId = const Value.absent(),
+    this.confirmedAt = const Value.absent(),
+    this.balanceScore = const Value.absent(),
+    this.json = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  LineupHistoriesCompanion.insert({
+    required DateTime updatedAt,
+    required String updatedBy,
+    this.deletedAt = const Value.absent(),
+    required String id,
+    required String groupId,
+    required DateTime confirmedAt,
+    required double balanceScore,
+    required String json,
+    this.rowid = const Value.absent(),
+  }) : updatedAt = Value(updatedAt),
+       updatedBy = Value(updatedBy),
+       id = Value(id),
+       groupId = Value(groupId),
+       confirmedAt = Value(confirmedAt),
+       balanceScore = Value(balanceScore),
+       json = Value(json);
+  static Insertable<LineupHistoryRow> custom({
+    Expression<DateTime>? updatedAt,
+    Expression<String>? updatedBy,
+    Expression<DateTime>? deletedAt,
+    Expression<String>? id,
+    Expression<String>? groupId,
+    Expression<DateTime>? confirmedAt,
+    Expression<double>? balanceScore,
+    Expression<String>? json,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (updatedBy != null) 'updated_by': updatedBy,
+      if (deletedAt != null) 'deleted_at': deletedAt,
+      if (id != null) 'id': id,
+      if (groupId != null) 'group_id': groupId,
+      if (confirmedAt != null) 'confirmed_at': confirmedAt,
+      if (balanceScore != null) 'balance_score': balanceScore,
+      if (json != null) 'json': json,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  LineupHistoriesCompanion copyWith({
+    Value<DateTime>? updatedAt,
+    Value<String>? updatedBy,
+    Value<DateTime?>? deletedAt,
+    Value<String>? id,
+    Value<String>? groupId,
+    Value<DateTime>? confirmedAt,
+    Value<double>? balanceScore,
+    Value<String>? json,
+    Value<int>? rowid,
+  }) {
+    return LineupHistoriesCompanion(
+      updatedAt: updatedAt ?? this.updatedAt,
+      updatedBy: updatedBy ?? this.updatedBy,
+      deletedAt: deletedAt ?? this.deletedAt,
+      id: id ?? this.id,
+      groupId: groupId ?? this.groupId,
+      confirmedAt: confirmedAt ?? this.confirmedAt,
+      balanceScore: balanceScore ?? this.balanceScore,
+      json: json ?? this.json,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (updatedBy.present) {
+      map['updated_by'] = Variable<String>(updatedBy.value);
+    }
+    if (deletedAt.present) {
+      map['deleted_at'] = Variable<DateTime>(deletedAt.value);
+    }
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (confirmedAt.present) {
+      map['confirmed_at'] = Variable<DateTime>(confirmedAt.value);
+    }
+    if (balanceScore.present) {
+      map['balance_score'] = Variable<double>(balanceScore.value);
+    }
+    if (json.present) {
+      map['json'] = Variable<String>(json.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LineupHistoriesCompanion(')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('updatedBy: $updatedBy, ')
+          ..write('deletedAt: $deletedAt, ')
+          ..write('id: $id, ')
+          ..write('groupId: $groupId, ')
+          ..write('confirmedAt: $confirmedAt, ')
+          ..write('balanceScore: $balanceScore, ')
+          ..write('json: $json, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $GroupSettingsTable extends GroupSettings
+    with TableInfo<$GroupSettingsTable, GroupSettingRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $GroupSettingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _groupIdMeta = const VerificationMeta(
+    'groupId',
+  );
+  @override
+  late final GeneratedColumn<String> groupId = GeneratedColumn<String>(
+    'group_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES "groups" (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _keyMeta = const VerificationMeta('key');
+  @override
+  late final GeneratedColumn<String> key = GeneratedColumn<String>(
+    'key',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valueMeta = const VerificationMeta('value');
+  @override
+  late final GeneratedColumn<String> value = GeneratedColumn<String>(
+    'value',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _updatedAtMeta = const VerificationMeta(
+    'updatedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> updatedAt = GeneratedColumn<DateTime>(
+    'updated_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [groupId, key, value, updatedAt];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'group_settings';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<GroupSettingRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('group_id')) {
+      context.handle(
+        _groupIdMeta,
+        groupId.isAcceptableOrUnknown(data['group_id']!, _groupIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_groupIdMeta);
+    }
+    if (data.containsKey('key')) {
+      context.handle(
+        _keyMeta,
+        key.isAcceptableOrUnknown(data['key']!, _keyMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_keyMeta);
+    }
+    if (data.containsKey('value')) {
+      context.handle(
+        _valueMeta,
+        value.isAcceptableOrUnknown(data['value']!, _valueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valueMeta);
+    }
+    if (data.containsKey('updated_at')) {
+      context.handle(
+        _updatedAtMeta,
+        updatedAt.isAcceptableOrUnknown(data['updated_at']!, _updatedAtMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_updatedAtMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {groupId, key};
+  @override
+  GroupSettingRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return GroupSettingRow(
+      groupId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}group_id'],
+      )!,
+      key: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}key'],
+      )!,
+      value: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}value'],
+      )!,
+      updatedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}updated_at'],
+      )!,
+    );
+  }
+
+  @override
+  $GroupSettingsTable createAlias(String alias) {
+    return $GroupSettingsTable(attachedDatabase, alias);
+  }
+}
+
+class GroupSettingRow extends DataClass implements Insertable<GroupSettingRow> {
+  final String groupId;
+  final String key;
+  final String value;
+  final DateTime updatedAt;
+  const GroupSettingRow({
+    required this.groupId,
+    required this.key,
+    required this.value,
+    required this.updatedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['group_id'] = Variable<String>(groupId);
+    map['key'] = Variable<String>(key);
+    map['value'] = Variable<String>(value);
+    map['updated_at'] = Variable<DateTime>(updatedAt);
+    return map;
+  }
+
+  GroupSettingsCompanion toCompanion(bool nullToAbsent) {
+    return GroupSettingsCompanion(
+      groupId: Value(groupId),
+      key: Value(key),
+      value: Value(value),
+      updatedAt: Value(updatedAt),
+    );
+  }
+
+  factory GroupSettingRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return GroupSettingRow(
+      groupId: serializer.fromJson<String>(json['groupId']),
+      key: serializer.fromJson<String>(json['key']),
+      value: serializer.fromJson<String>(json['value']),
+      updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'groupId': serializer.toJson<String>(groupId),
+      'key': serializer.toJson<String>(key),
+      'value': serializer.toJson<String>(value),
+      'updatedAt': serializer.toJson<DateTime>(updatedAt),
+    };
+  }
+
+  GroupSettingRow copyWith({
+    String? groupId,
+    String? key,
+    String? value,
+    DateTime? updatedAt,
+  }) => GroupSettingRow(
+    groupId: groupId ?? this.groupId,
+    key: key ?? this.key,
+    value: value ?? this.value,
+    updatedAt: updatedAt ?? this.updatedAt,
+  );
+  GroupSettingRow copyWithCompanion(GroupSettingsCompanion data) {
+    return GroupSettingRow(
+      groupId: data.groupId.present ? data.groupId.value : this.groupId,
+      key: data.key.present ? data.key.value : this.key,
+      value: data.value.present ? data.value.value : this.value,
+      updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupSettingRow(')
+          ..write('groupId: $groupId, ')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(groupId, key, value, updatedAt);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is GroupSettingRow &&
+          other.groupId == this.groupId &&
+          other.key == this.key &&
+          other.value == this.value &&
+          other.updatedAt == this.updatedAt);
+}
+
+class GroupSettingsCompanion extends UpdateCompanion<GroupSettingRow> {
+  final Value<String> groupId;
+  final Value<String> key;
+  final Value<String> value;
+  final Value<DateTime> updatedAt;
+  final Value<int> rowid;
+  const GroupSettingsCompanion({
+    this.groupId = const Value.absent(),
+    this.key = const Value.absent(),
+    this.value = const Value.absent(),
+    this.updatedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  GroupSettingsCompanion.insert({
+    required String groupId,
+    required String key,
+    required String value,
+    required DateTime updatedAt,
+    this.rowid = const Value.absent(),
+  }) : groupId = Value(groupId),
+       key = Value(key),
+       value = Value(value),
+       updatedAt = Value(updatedAt);
+  static Insertable<GroupSettingRow> custom({
+    Expression<String>? groupId,
+    Expression<String>? key,
+    Expression<String>? value,
+    Expression<DateTime>? updatedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (groupId != null) 'group_id': groupId,
+      if (key != null) 'key': key,
+      if (value != null) 'value': value,
+      if (updatedAt != null) 'updated_at': updatedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  GroupSettingsCompanion copyWith({
+    Value<String>? groupId,
+    Value<String>? key,
+    Value<String>? value,
+    Value<DateTime>? updatedAt,
+    Value<int>? rowid,
+  }) {
+    return GroupSettingsCompanion(
+      groupId: groupId ?? this.groupId,
+      key: key ?? this.key,
+      value: value ?? this.value,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (groupId.present) {
+      map['group_id'] = Variable<String>(groupId.value);
+    }
+    if (key.present) {
+      map['key'] = Variable<String>(key.value);
+    }
+    if (value.present) {
+      map['value'] = Variable<String>(value.value);
+    }
+    if (updatedAt.present) {
+      map['updated_at'] = Variable<DateTime>(updatedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('GroupSettingsCompanion(')
+          ..write('groupId: $groupId, ')
+          ..write('key: $key, ')
+          ..write('value: $value, ')
+          ..write('updatedAt: $updatedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -2896,6 +3737,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
       $PlayerConstraintsTable(this);
   late final $DeviceSettingsTable deviceSettings = $DeviceSettingsTable(this);
   late final $SessionDraftsTable sessionDrafts = $SessionDraftsTable(this);
+  late final $LineupHistoriesTable lineupHistories = $LineupHistoriesTable(
+    this,
+  );
+  late final $GroupSettingsTable groupSettings = $GroupSettingsTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -2906,6 +3751,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     playerConstraints,
     deviceSettings,
     sessionDrafts,
+    lineupHistories,
+    groupSettings,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -2929,6 +3776,20 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('session_drafts', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('lineup_histories', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'groups',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('group_settings', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -3019,6 +3880,44 @@ final class $$GroupsTableReferences
     ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_sessionDraftsRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$LineupHistoriesTable, List<LineupHistoryRow>>
+  _lineupHistoriesRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.lineupHistories,
+    aliasName: 'groups__id__lineup_histories__group_id',
+  );
+
+  $$LineupHistoriesTableProcessedTableManager get lineupHistoriesRefs {
+    final manager = $$LineupHistoriesTableTableManager(
+      $_db,
+      $_db.lineupHistories,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _lineupHistoriesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$GroupSettingsTable, List<GroupSettingRow>>
+  _groupSettingsRefsTable(_$AppDatabase db) => MultiTypedResultKey.fromTable(
+    db.groupSettings,
+    aliasName: 'groups__id__group_settings__group_id',
+  );
+
+  $$GroupSettingsTableProcessedTableManager get groupSettingsRefs {
+    final manager = $$GroupSettingsTableTableManager(
+      $_db,
+      $_db.groupSettings,
+    ).filter((f) => f.groupId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_groupSettingsRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -3157,6 +4056,56 @@ class $$GroupsTableFilterComposer
           }) => $$SessionDraftsTableFilterComposer(
             $db: $db,
             $table: $db.sessionDrafts,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> lineupHistoriesRefs(
+    Expression<bool> Function($$LineupHistoriesTableFilterComposer f) f,
+  ) {
+    final $$LineupHistoriesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.lineupHistories,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LineupHistoriesTableFilterComposer(
+            $db: $db,
+            $table: $db.lineupHistories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> groupSettingsRefs(
+    Expression<bool> Function($$GroupSettingsTableFilterComposer f) f,
+  ) {
+    final $$GroupSettingsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.groupSettings,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupSettingsTableFilterComposer(
+            $db: $db,
+            $table: $db.groupSettings,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -3358,6 +4307,56 @@ class $$GroupsTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> lineupHistoriesRefs<T extends Object>(
+    Expression<T> Function($$LineupHistoriesTableAnnotationComposer a) f,
+  ) {
+    final $$LineupHistoriesTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.lineupHistories,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LineupHistoriesTableAnnotationComposer(
+            $db: $db,
+            $table: $db.lineupHistories,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<T> groupSettingsRefs<T extends Object>(
+    Expression<T> Function($$GroupSettingsTableAnnotationComposer a) f,
+  ) {
+    final $$GroupSettingsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.groupSettings,
+      getReferencedColumn: (t) => t.groupId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupSettingsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groupSettings,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$GroupsTableTableManager
@@ -3377,6 +4376,8 @@ class $$GroupsTableTableManager
             bool playersRefs,
             bool playerConstraintsRefs,
             bool sessionDraftsRefs,
+            bool lineupHistoriesRefs,
+            bool groupSettingsRefs,
           })
         > {
   $$GroupsTableTableManager(_$AppDatabase db, $GroupsTable table)
@@ -3459,6 +4460,8 @@ class $$GroupsTableTableManager
                 playersRefs = false,
                 playerConstraintsRefs = false,
                 sessionDraftsRefs = false,
+                lineupHistoriesRefs = false,
+                groupSettingsRefs = false,
               }) {
                 return PrefetchHooks(
                   db: db,
@@ -3466,6 +4469,8 @@ class $$GroupsTableTableManager
                     if (playersRefs) db.players,
                     if (playerConstraintsRefs) db.playerConstraints,
                     if (sessionDraftsRefs) db.sessionDrafts,
+                    if (lineupHistoriesRefs) db.lineupHistories,
+                    if (groupSettingsRefs) db.groupSettings,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -3530,6 +4535,46 @@ class $$GroupsTableTableManager
                           referencedColumn: 'group_id',
                           typedResults: items,
                         ),
+                      if (lineupHistoriesRefs)
+                        await $_getPrefetchedDataByColumns<
+                          GroupRow,
+                          $GroupsTable,
+                          LineupHistoryRow,
+                          $LineupHistoriesTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$GroupsTableReferences
+                              ._lineupHistoriesRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$GroupsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).lineupHistoriesRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'group_id',
+                          typedResults: items,
+                        ),
+                      if (groupSettingsRefs)
+                        await $_getPrefetchedDataByColumns<
+                          GroupRow,
+                          $GroupsTable,
+                          GroupSettingRow,
+                          $GroupSettingsTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$GroupsTableReferences
+                              ._groupSettingsRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$GroupsTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).groupSettingsRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'group_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -3554,6 +4599,8 @@ typedef $$GroupsTableProcessedTableManager =
         bool playersRefs,
         bool playerConstraintsRefs,
         bool sessionDraftsRefs,
+        bool lineupHistoriesRefs,
+        bool groupSettingsRefs,
       })
     >;
 typedef $$PlayersTableCreateCompanionBuilder = PlayersCompanion Function({
@@ -5025,6 +6072,690 @@ typedef $$SessionDraftsTableProcessedTableManager =
       SessionDraftRow,
       PrefetchHooks Function({bool groupId})
     >;
+typedef $$LineupHistoriesTableCreateCompanionBuilder =
+    LineupHistoriesCompanion Function({
+      required DateTime updatedAt,
+      required String updatedBy,
+      Value<DateTime?> deletedAt,
+      required String id,
+      required String groupId,
+      required DateTime confirmedAt,
+      required double balanceScore,
+      required String json,
+      Value<int> rowid,
+    });
+typedef $$LineupHistoriesTableUpdateCompanionBuilder =
+    LineupHistoriesCompanion Function({
+      Value<DateTime> updatedAt,
+      Value<String> updatedBy,
+      Value<DateTime?> deletedAt,
+      Value<String> id,
+      Value<String> groupId,
+      Value<DateTime> confirmedAt,
+      Value<double> balanceScore,
+      Value<String> json,
+      Value<int> rowid,
+    });
+
+final class $$LineupHistoriesTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $LineupHistoriesTable, LineupHistoryRow> {
+  $$LineupHistoriesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $GroupsTable _groupIdTable(_$AppDatabase db) =>
+      db.groups.createAlias('lineup_histories__group_id__groups__id');
+
+  $$GroupsTableProcessedTableManager get groupId {
+    final $_column = $_itemColumn<String>('group_id')!;
+
+    final manager = $$GroupsTableTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$LineupHistoriesTableFilterComposer
+    extends Composer<_$AppDatabase, $LineupHistoriesTable> {
+  $$LineupHistoriesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get confirmedAt => $composableBuilder(
+    column: $table.confirmedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get balanceScore => $composableBuilder(
+    column: $table.balanceScore,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$GroupsTableFilterComposer get groupId {
+    final $$GroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LineupHistoriesTableOrderingComposer
+    extends Composer<_$AppDatabase, $LineupHistoriesTable> {
+  $$LineupHistoriesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get updatedBy => $composableBuilder(
+    column: $table.updatedBy,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get deletedAt => $composableBuilder(
+    column: $table.deletedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get confirmedAt => $composableBuilder(
+    column: $table.confirmedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get balanceScore => $composableBuilder(
+    column: $table.balanceScore,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get json => $composableBuilder(
+    column: $table.json,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$GroupsTableOrderingComposer get groupId {
+    final $$GroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LineupHistoriesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $LineupHistoriesTable> {
+  $$LineupHistoriesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get updatedBy =>
+      $composableBuilder(column: $table.updatedBy, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get deletedAt =>
+      $composableBuilder(column: $table.deletedAt, builder: (column) => column);
+
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get confirmedAt => $composableBuilder(
+    column: $table.confirmedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get balanceScore => $composableBuilder(
+    column: $table.balanceScore,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get json =>
+      $composableBuilder(column: $table.json, builder: (column) => column);
+
+  $$GroupsTableAnnotationComposer get groupId {
+    final $$GroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$LineupHistoriesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $LineupHistoriesTable,
+          LineupHistoryRow,
+          $$LineupHistoriesTableFilterComposer,
+          $$LineupHistoriesTableOrderingComposer,
+          $$LineupHistoriesTableAnnotationComposer,
+          $$LineupHistoriesTableCreateCompanionBuilder,
+          $$LineupHistoriesTableUpdateCompanionBuilder,
+          (LineupHistoryRow, $$LineupHistoriesTableReferences),
+          LineupHistoryRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $$LineupHistoriesTableTableManager(
+    _$AppDatabase db,
+    $LineupHistoriesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LineupHistoriesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LineupHistoriesTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LineupHistoriesTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<String> updatedBy = const Value.absent(),
+                Value<DateTime?> deletedAt = const Value.absent(),
+                Value<String> id = const Value.absent(),
+                Value<String> groupId = const Value.absent(),
+                Value<DateTime> confirmedAt = const Value.absent(),
+                Value<double> balanceScore = const Value.absent(),
+                Value<String> json = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => LineupHistoriesCompanion(
+                updatedAt: updatedAt,
+                updatedBy: updatedBy,
+                deletedAt: deletedAt,
+                id: id,
+                groupId: groupId,
+                confirmedAt: confirmedAt,
+                balanceScore: balanceScore,
+                json: json,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required DateTime updatedAt,
+                required String updatedBy,
+                Value<DateTime?> deletedAt = const Value.absent(),
+                required String id,
+                required String groupId,
+                required DateTime confirmedAt,
+                required double balanceScore,
+                required String json,
+                Value<int> rowid = const Value.absent(),
+              }) => LineupHistoriesCompanion.insert(
+                updatedAt: updatedAt,
+                updatedBy: updatedBy,
+                deletedAt: deletedAt,
+                id: id,
+                groupId: groupId,
+                confirmedAt: confirmedAt,
+                balanceScore: balanceScore,
+                json: json,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LineupHistoriesTable, LineupHistoryRow>(table),
+                  $$LineupHistoriesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $$LineupHistoriesTableReferences
+                            ._groupIdTable(db),
+                        referencedColumn: $$LineupHistoriesTableReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LineupHistoriesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $LineupHistoriesTable,
+      LineupHistoryRow,
+      $$LineupHistoriesTableFilterComposer,
+      $$LineupHistoriesTableOrderingComposer,
+      $$LineupHistoriesTableAnnotationComposer,
+      $$LineupHistoriesTableCreateCompanionBuilder,
+      $$LineupHistoriesTableUpdateCompanionBuilder,
+      (LineupHistoryRow, $$LineupHistoriesTableReferences),
+      LineupHistoryRow,
+      PrefetchHooks Function({bool groupId})
+    >;
+typedef $$GroupSettingsTableCreateCompanionBuilder =
+    GroupSettingsCompanion Function({
+      required String groupId,
+      required String key,
+      required String value,
+      required DateTime updatedAt,
+      Value<int> rowid,
+    });
+typedef $$GroupSettingsTableUpdateCompanionBuilder =
+    GroupSettingsCompanion Function({
+      Value<String> groupId,
+      Value<String> key,
+      Value<String> value,
+      Value<DateTime> updatedAt,
+      Value<int> rowid,
+    });
+
+final class $$GroupSettingsTableReferences
+    extends
+        BaseReferences<_$AppDatabase, $GroupSettingsTable, GroupSettingRow> {
+  $$GroupSettingsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $GroupsTable _groupIdTable(_$AppDatabase db) =>
+      db.groups.createAlias('group_settings__group_id__groups__id');
+
+  $$GroupsTableProcessedTableManager get groupId {
+    final $_column = $_itemColumn<String>('group_id')!;
+
+    final manager = $$GroupsTableTableManager(
+      $_db,
+      $_db.groups,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_groupIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$GroupSettingsTableFilterComposer
+    extends Composer<_$AppDatabase, $GroupSettingsTable> {
+  $$GroupSettingsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$GroupsTableFilterComposer get groupId {
+    final $$GroupsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableFilterComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$GroupSettingsTableOrderingComposer
+    extends Composer<_$AppDatabase, $GroupSettingsTable> {
+  $$GroupSettingsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get key => $composableBuilder(
+    column: $table.key,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get value => $composableBuilder(
+    column: $table.value,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get updatedAt => $composableBuilder(
+    column: $table.updatedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$GroupsTableOrderingComposer get groupId {
+    final $$GroupsTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableOrderingComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$GroupSettingsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $GroupSettingsTable> {
+  $$GroupSettingsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get key =>
+      $composableBuilder(column: $table.key, builder: (column) => column);
+
+  GeneratedColumn<String> get value =>
+      $composableBuilder(column: $table.value, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get updatedAt =>
+      $composableBuilder(column: $table.updatedAt, builder: (column) => column);
+
+  $$GroupsTableAnnotationComposer get groupId {
+    final $$GroupsTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.groupId,
+      referencedTable: $db.groups,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$GroupsTableAnnotationComposer(
+            $db: $db,
+            $table: $db.groups,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$GroupSettingsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $GroupSettingsTable,
+          GroupSettingRow,
+          $$GroupSettingsTableFilterComposer,
+          $$GroupSettingsTableOrderingComposer,
+          $$GroupSettingsTableAnnotationComposer,
+          $$GroupSettingsTableCreateCompanionBuilder,
+          $$GroupSettingsTableUpdateCompanionBuilder,
+          (GroupSettingRow, $$GroupSettingsTableReferences),
+          GroupSettingRow,
+          PrefetchHooks Function({bool groupId})
+        > {
+  $$GroupSettingsTableTableManager(_$AppDatabase db, $GroupSettingsTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$GroupSettingsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$GroupSettingsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$GroupSettingsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> groupId = const Value.absent(),
+                Value<String> key = const Value.absent(),
+                Value<String> value = const Value.absent(),
+                Value<DateTime> updatedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => GroupSettingsCompanion(
+                groupId: groupId,
+                key: key,
+                value: value,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String groupId,
+                required String key,
+                required String value,
+                required DateTime updatedAt,
+                Value<int> rowid = const Value.absent(),
+              }) => GroupSettingsCompanion.insert(
+                groupId: groupId,
+                key: key,
+                value: value,
+                updatedAt: updatedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$GroupSettingsTable, GroupSettingRow>(table),
+                  $$GroupSettingsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({groupId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (groupId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.groupId,
+                        referencedTable: $$GroupSettingsTableReferences
+                            ._groupIdTable(db),
+                        referencedColumn: $$GroupSettingsTableReferences
+                            ._groupIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$GroupSettingsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $GroupSettingsTable,
+      GroupSettingRow,
+      $$GroupSettingsTableFilterComposer,
+      $$GroupSettingsTableOrderingComposer,
+      $$GroupSettingsTableAnnotationComposer,
+      $$GroupSettingsTableCreateCompanionBuilder,
+      $$GroupSettingsTableUpdateCompanionBuilder,
+      (GroupSettingRow, $$GroupSettingsTableReferences),
+      GroupSettingRow,
+      PrefetchHooks Function({bool groupId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -5039,4 +6770,8 @@ class $AppDatabaseManager {
       $$DeviceSettingsTableTableManager(_db, _db.deviceSettings);
   $$SessionDraftsTableTableManager get sessionDrafts =>
       $$SessionDraftsTableTableManager(_db, _db.sessionDrafts);
+  $$LineupHistoriesTableTableManager get lineupHistories =>
+      $$LineupHistoriesTableTableManager(_db, _db.lineupHistories);
+  $$GroupSettingsTableTableManager get groupSettings =>
+      $$GroupSettingsTableTableManager(_db, _db.groupSettings);
 }

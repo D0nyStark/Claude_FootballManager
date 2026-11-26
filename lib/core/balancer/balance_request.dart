@@ -2,17 +2,19 @@ import '../models/formation.dart';
 import '../models/lineup.dart';
 import '../models/player.dart';
 import '../models/team_constraint.dart';
+import '../scoring/weights.dart';
 
 /// 반복 조합 회피 강도 (SPEC F4.6, §6.6). [weight]는 밸런스 점수 환산 페널티.
 enum RepeatAvoidance {
-  off(0),
-  weak(3),
-  medium(6),
-  strong(10);
+  off(0, '끄기'),
+  weak(3, '약'),
+  medium(6, '중'),
+  strong(10, '강');
 
-  const RepeatAvoidance(this.weight);
+  const RepeatAvoidance(this.weight, this.label);
 
   final double weight;
+  final String label;
 }
 
 /// 자동 편성 입력 (SPEC §6.1).
@@ -33,6 +35,7 @@ class BalanceRequest {
     this.maxCandidates = 3,
     this.restarts = 10,
     this.iterations = 4000,
+    this.balanceWeights,
   });
 
   static const int minTeams = 2;
@@ -68,4 +71,7 @@ class BalanceRequest {
   final int maxCandidates;
   final int restarts;
   final int iterations;
+
+  /// 모임 설정의 밸런스 점수 비중. null이면 기본값.
+  final BalanceWeights? balanceWeights;
 }
