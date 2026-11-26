@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'dart:io' show ZLibCodec;
 import 'dart:typed_data';
 
 import '../../core/models/player_stats.dart';
+import 'raw_deflate.dart';
 import 'group_bundle.dart';
 
 /// 초대 링크용 짧은 형식 (SPEC F13, §7.2) — "MUG2:" + base64url(deflate(압축 JSON)).
@@ -95,10 +95,7 @@ abstract final class InviteCodec {
         for (final s in b.settings) [s['key'], s['value'], dt(s['updatedAt'])],
       ],
     };
-    final bytes = ZLibCodec(
-      raw: true,
-      level: 9,
-    ).encode(utf8.encode(jsonEncode(json)));
+    final bytes = deflateRaw(utf8.encode(jsonEncode(json)));
     return '$prefix${base64Url.encode(bytes).replaceAll('=', '')}';
   }
 
@@ -166,7 +163,7 @@ abstract final class InviteCodec {
     s = s.split(RegExp(r'[^A-Za-z0-9_\-]')).first;
     final padded = s.padRight((s.length + 3) ~/ 4 * 4, '=');
     final j = jsonDecode(
-      utf8.decode(ZLibCodec(raw: true).decode(base64Url.decode(padded))),
+      utf8.decode(inflateRaw(base64Url.decode(padded))),
     ) as Map<String, Object?>;
     if (j['v'] != 2) throw const FormatException('지원하지 않는 초대 링크 버전');
 

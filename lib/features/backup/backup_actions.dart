@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path_provider/path_provider.dart';
@@ -78,7 +79,7 @@ Future<void> importGroupBackup(BuildContext context, WidgetRef ref) async {
         '${exists ? '이 기기에 같은 모임이 있어요.\n'
                   '병합: 항목별로 더 최근에 고친 쪽을 남겨요.\n'
                   '덮어쓰기: 이 기기의 모임 내용을 백업 내용으로 바꿔요.\n'
-                  '(가져오기 전에 지금 상태를 자동으로 백업해 둬요)' : '새 모임으로 추가돼요.'}',
+                  '${kIsWeb ? '(웹에서는 자동 백업이 없어요. 덮어쓰기 전에 [백업 내보내기]를 먼저 해 두세요)' : '(가져오기 전에 지금 상태를 자동으로 백업해 둬요)'}' : '새 모임으로 추가돼요.'}',
       ),
       actions: [
         TextButton(
@@ -107,7 +108,8 @@ Future<void> importGroupBackup(BuildContext context, WidgetRef ref) async {
   );
   if (mode == null) return;
 
-  if (exists) {
+  // 웹에는 파일 폴더가 없어 자동 백업을 건너뛴다 (가져오기 창에서 미리 내보내기를 권함).
+  if (exists && !kIsWeb) {
     // 가져오기 직전 자동 백업 (실패해도 가져오기는 진행).
     try {
       final dir = await ref.read(autoBackupDirProvider)();

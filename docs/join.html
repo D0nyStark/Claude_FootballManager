@@ -22,7 +22,7 @@
          font-size:16px; font-weight:600; text-align:center; text-decoration:none; border:0; cursor:pointer; }
   .primary { background:var(--green); color:#fff; }
   .secondary { background:transparent; color:var(--green); border:1.5px solid var(--green) !important; }
-  .hidden { display:none; }
+  .hidden { display:none !important; }
   .toast { margin-top:12px; font-size:14px; color:var(--green); min-height:20px; }
   ol { padding-left:20px; margin:8px 0 0; }
 </style>
@@ -39,12 +39,23 @@
 
       <a class="btn primary" id="openApp" href="#">앱에서 열기</a>
       <button class="secondary" id="install">앱 설치 (처음이에요)</button>
+      <a class="btn secondary" id="openWeb" href="#">웹앱으로 열기</a>
       <button class="secondary" id="copy">링크 복사</button>
       <a class="btn secondary hidden" id="external" href="#">다른 브라우저로 열기</a>
       <div class="toast" id="toast"></div>
 
-      <p class="muted">처음 설치하는 경우</p>
-      <ol class="muted">
+      <div id="iosGuide" class="hidden">
+        <p class="muted">아이폰은 웹앱으로 써요</p>
+        <ol class="muted">
+          <li>[웹앱으로 열기]를 누르면 사파리에서 바로 모임에 참여해요.</li>
+          <li>사파리 공유 버튼 → <b>홈 화면에 추가</b>로 설치해 두면 앱처럼 쓸 수 있어요.</li>
+          <li>홈 화면 앱은 사파리와 저장 공간이 따로예요. 설치한 앱에서 [초대 링크로 참여]에 이 링크를 붙여넣어 주세요 ([링크 복사]).</li>
+          <li>폰을 <b>가로</b>로 돌려서 써요.</li>
+        </ol>
+      </div>
+
+      <p class="muted" id="androidGuideTitle">처음 설치하는 경우 (안드로이드)</p>
+      <ol class="muted" id="androidGuide">
         <li>[앱 설치]를 누르면 초대 링크가 자동으로 복사돼요.</li>
         <li>설치한 앱을 열면 복사된 초대를 알아보고 참여할지 물어봐요.</li>
         <li>안 되면 카카오톡의 초대 링크를 한 번 더 눌러 주세요.</li>
@@ -70,6 +81,22 @@
 
   var appUrl = 'futsalteammaker://join?d=' + encodeURIComponent(payload);
   var isAndroid = /Android/i.test(navigator.userAgent);
+  var isIos = /iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  // 웹앱 (아이폰용). 묶음은 '#' 뒤에 실어 서버로 보내지 않는다.
+  var webUrl = new URL('app/', location.href).href + '#' + encodeURIComponent(payload);
+  document.getElementById('openWeb').href = webUrl;
+  if (isIos) {
+    // 아이폰: 안드로이드 앱 버튼 대신 웹앱을 앞세운다.
+    var openWeb = document.getElementById('openWeb');
+    openWeb.classList.remove('secondary'); openWeb.classList.add('primary');
+    document.getElementById('openApp').classList.add('hidden');
+    document.getElementById('install').classList.add('hidden');
+    document.getElementById('androidGuide').classList.add('hidden');
+    document.getElementById('androidGuideTitle').classList.add('hidden');
+    document.getElementById('iosGuide').classList.remove('hidden');
+    openWeb.parentNode.insertBefore(openWeb, openWeb.parentNode.querySelector('#copy'));
+  }
   var openApp = document.getElementById('openApp');
   openApp.href = isAndroid
     ? 'intent://join?d=' + encodeURIComponent(payload) +

@@ -25,8 +25,16 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase(super.executor);
 
   /// 앱에서 쓰는 기기 내 SQLite 파일.
-  factory AppDatabase.open() =>
-      AppDatabase(driftDatabase(name: 'futsal_team_maker'));
+  factory AppDatabase.open() => AppDatabase(
+    driftDatabase(
+      name: 'futsal_team_maker',
+      // 웹: 브라우저 저장소(OPFS 또는 IndexedDB)에 SQLite. 파일은 web/에 둔다.
+      web: DriftWebOptions(
+        sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+        driftWorker: Uri.parse('drift_worker.js'),
+      ),
+    ),
+  );
 
   @override
   int get schemaVersion => 5;

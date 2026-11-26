@@ -1,0 +1,36 @@
+{
+    "name": "풋살 팀메이커",
+    "short_name": "팀메이커",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#F4F7F2",
+    "theme_color": "#1B8A3C",
+    "description": "실력 균형이 맞는 풋살 팀을 자동으로 짜 주는 앱",
+    "orientation": "landscape",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "icons/Icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        },
+        {
+            "src": "icons/Icon-maskable-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "icons/Icon-maskable-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "lang": "ko"
+}

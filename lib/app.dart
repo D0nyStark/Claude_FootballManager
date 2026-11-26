@@ -1,5 +1,6 @@
 import 'package:material_ui/material_ui.dart';
 
+import 'features/common/web_frame.dart';
 import 'features/groups/group_list_page.dart';
 
 /// 풋살 팀메이커 앱 루트.
@@ -24,6 +25,7 @@ class FutsalTeamMakerApp extends StatelessWidget {
           brightness: Brightness.dark,
         ),
       ),
+      builder: (context, child) => WebFrame(child: child!),
       home: GroupListPage(autoEnterSingleGroup: autoEnterSingleGroup),
     );
   }

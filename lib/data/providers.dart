@@ -1,5 +1,7 @@
 import 'dart:isolate';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/balancer/balancer.dart';
@@ -57,11 +59,15 @@ final sessionRepositoryProvider = Provider(
 );
 
 /// 자동 편성 실행기. 화면이 멈추지 않도록 별도 isolate에서 계산한다.
+/// 웹은 isolate가 없어 메인 스레드에서 계산한다 (진행 표시가 먼저 그려지게 한 프레임 쉰 뒤).
 /// 테스트에서는 같은 isolate에서 바로 계산하도록 덮어쓴다.
 final balancerRunnerProvider =
     Provider<Future<BalanceResult> Function(BalanceRequest)>(
       (ref) =>
-          (request) => Isolate.run(() => const TeamBalancer().balance(request)),
+          (request) => kIsWeb
+          ? Future<void>.delayed(const Duration(milliseconds: 50))
+                .then((_) => const TeamBalancer().balance(request))
+          : Isolate.run(() => const TeamBalancer().balance(request)),
     );
 
 final historyRepositoryProvider = Provider(

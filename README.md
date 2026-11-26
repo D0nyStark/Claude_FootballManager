@@ -1,6 +1,6 @@
 # 풋살 팀메이커 (Futsal Team Maker)
 
-풋살 모임의 선수·능력치를 미리 등록해 두고, 당일 출전자만 골라 **밸런스가 맞는 팀을 자동으로 편성**하는 Android 앱입니다.
+풋살 모임의 선수·능력치를 미리 등록해 두고, 당일 출전자만 골라 **밸런스가 맞는 팀을 자동으로 편성**하는 Android 앱입니다. 아이폰은 같은 코드로 만든 **웹앱(PWA)**으로 씁니다.
 기획 문서는 [SPEC.md](SPEC.md)를 참고하세요.
 
 - 패키지: `com.mug.futsalteammaker`
@@ -29,6 +29,17 @@ test/core/         # 엔진·점수 단위 테스트 (SPEC §6.8 품질 목표 �
 - 지원: Android 7.0(API 24) 이상, 가로 모드 전용
 - 데모 빌드는 **디버그 키로 서명**되어 있다. 스토어 출시 전에는 별도 서명 키를 만들어 `android/key.properties`로 연결해야 한다 (키 파일은 저장소에 올리지 않는다).
 - 앱 아이콘: `python3 tool/make_icon.py`로 다시 만들 수 있다.
+
+## 아이폰용 웹앱
+
+```bash
+./tool/build_web.sh   # flutter build web → 쓰지 않는 렌더러 파일 정리 → docs/app/
+```
+
+- GitHub Pages(아래)를 켜면 `https://d0nystark.github.io/Claude_FootballManager/app/`에서 열린다.
+- 아이폰 사파리에서 열고 공유 버튼 → **홈 화면에 추가**. 가로로 돌려서 쓴다.
+- 앱 코드를 고치면 `tool/build_web.sh`를 다시 실행해 `docs/app/`을 함께 커밋한다.
+- `web/sqlite3.wasm`, `web/drift_worker.js`는 drift/sqlite3 패키지 버전에 맞춘 파일이다 (sqlite3 3.9.2, drift 2.35.4). 패키지를 올리면 같은 버전의 릴리스 파일로 바꾼다.
 
 ## 초대 링크 안내 페이지
 
@@ -60,4 +71,5 @@ flutter build apk      # 데모 배포용 APK
 | M6 확정·공유·백업 (편성 이력 3개·반복 회피 연결, 텍스트/이미지 공유, .mug 백업·병합, 모임 설정) | ✅ |
 | M6.5 초대 링크 (MUG2 짧은 형식, 운영진/멤버 초대, 변경 공유, 안내 페이지, 클립보드 감지) | ✅ |
 | M7 데모 빌드 (앱 아이콘, 릴리스 APK: arm64 21.7MB / 범용 62MB) | ✅ |
+| 아이폰용 웹앱 (PWA, GitHub Pages `/app/`, 세로 안내, 웹 초대 링크) | ✅ |
 | 실기기 시범 사용 · 피드백 반영 | ⏳ |

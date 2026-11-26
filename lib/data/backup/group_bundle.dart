@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io' show ZLibCodec;
 
 import 'package:drift/drift.dart';
 
@@ -7,6 +6,7 @@ import '../db/app_database.dart';
 import '../../core/models/formation.dart';
 import '../../core/models/group_role.dart';
 import '../../core/models/player_stats.dart';
+import 'raw_deflate.dart';
 
 /// 모임 데이터 묶음 (SPEC §7.2) — 백업 파일(.mug)과 초대 링크가 같은 형식을 쓴다.
 ///
@@ -83,10 +83,7 @@ class GroupBundle {
 
   /// 압축 문자열 ("MUG1:" + base64url).
   String encode() {
-    final bytes = ZLibCodec(
-      raw: true,
-      level: 9,
-    ).encode(utf8.encode(jsonEncode(toJson())));
+    final bytes = deflateRaw(utf8.encode(jsonEncode(toJson())));
     return '$prefix${base64Url.encode(bytes).replaceAll('=', '')}';
   }
 
@@ -96,9 +93,7 @@ class GroupBundle {
     if (i < 0) throw const FormatException('풋살 팀메이커 백업이 아니에요');
     s = s.substring(i + prefix.length).split(RegExp(r'\s')).first;
     final padded = s.padRight((s.length + 3) ~/ 4 * 4, '=');
-    final json = utf8.decode(
-      ZLibCodec(raw: true).decode(base64Url.decode(padded)),
-    );
+    final json = utf8.decode(inflateRaw(base64Url.decode(padded)));
     return GroupBundle.fromJson((jsonDecode(json) as Map).cast());
   }
 }

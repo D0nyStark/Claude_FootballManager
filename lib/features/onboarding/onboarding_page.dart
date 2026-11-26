@@ -6,6 +6,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../common/common_widgets.dart';
 import '../group/group_shell_page.dart';
+import '../invite/invite_actions.dart';
 import 'roster_parser.dart';
 
 /// 모임 생성 마법사 (SPEC F12). 모든 단계에서 건너뛰기·나중에 하기 가능.
@@ -528,17 +529,36 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     );
   }
 
-  Widget _inviteStep(ThemeData theme) => Center(
-    child: Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(Icons.group_add, size: 48, color: theme.colorScheme.primary),
-        const SizedBox(height: 12),
-        Text('멤버 초대', style: theme.textTheme.titleLarge),
-        const SizedBox(height: 8),
-        const Text('카카오톡·메시지로 초대 링크를 보내는 기능은 다음 업데이트에서 제공돼요.'),
-        const Text('지금은 완료를 눌러 시작하세요.'),
-      ],
-    ),
-  );
+  Widget _inviteStep(ThemeData theme) {
+    final group = _groupId == null
+        ? null
+        : ref.watch(groupProvider(_groupId!)).value;
+    return Center(
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.group_add, size: 48, color: theme.colorScheme.primary),
+            const SizedBox(height: 12),
+            Text('멤버 초대', style: theme.textTheme.titleLarge),
+            const SizedBox(height: 8),
+            const Text(
+              '카카오톡·메시지로 초대 링크를 보내면 받은 사람의 폰에 같은 모임이 생겨요.\n'
+              '나중에 모임 설정에서도 보낼 수 있어요.',
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            FilledButton.tonalIcon(
+              key: const Key('onboardingInvite'),
+              onPressed: group == null
+                  ? null
+                  : () => sendInvite(context, ref, group),
+              icon: const Icon(Icons.send),
+              label: const Text('초대 링크 보내기'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
