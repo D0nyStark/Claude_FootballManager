@@ -8,6 +8,7 @@ import '../match/deck_page.dart';
 import '../onboarding/onboarding_page.dart';
 import '../tutorial/coach_marks.dart';
 import '../history/history_page.dart';
+import '../invite/invite_actions.dart';
 
 /// 모임 홈: 오늘 매치 형식 선택 (SPEC F0, §8.2-1).
 class GroupHomeView extends ConsumerWidget {
@@ -20,6 +21,8 @@ class GroupHomeView extends ConsumerWidget {
     final theme = Theme.of(context);
     final playerCount = ref.watch(playersProvider(group.id)).value?.length;
     final last = ref.watch(historyProvider(group.id)).value?.firstOrNull;
+    // 마지막 공유 이후 바뀐 항목 수 ("공유 안 된 변경 N건", SPEC F13.4).
+    final unshared = ref.watch(unsharedChangesProvider(group.id)).value;
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
       child: Column(
@@ -109,17 +112,30 @@ class GroupHomeView extends ConsumerWidget {
                 ),
                 const SizedBox(width: 12),
               ],
-              // 초대·변경 공유는 M6.5에서 구현.
-              OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.group_add),
-                label: const Text('초대하기'),
+              CoachTarget(
+                id: 'home.invite',
+                child: OutlinedButton.icon(
+                  key: const Key('invite'),
+                  onPressed: () => sendInvite(context, ref, group),
+                  icon: const Icon(Icons.group_add),
+                  label: const Text('초대하기'),
+                ),
               ),
               const SizedBox(width: 12),
-              OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.upload),
-                label: const Text('변경 공유'),
+              CoachTarget(
+                id: 'home.shareChanges',
+                child: Badge(
+                  isLabelVisible: (unshared ?? 0) > 0,
+                  label: Text('${unshared ?? 0}'),
+                  child: OutlinedButton.icon(
+                    key: const Key('shareChanges'),
+                    onPressed: () => shareChanges(context, ref, group),
+                    icon: const Icon(Icons.upload),
+                    label: Text(
+                      (unshared ?? 0) > 0 ? '변경 공유 ($unshared건)' : '변경 공유',
+                    ),
+                  ),
+                ),
               ),
             ],
           ),

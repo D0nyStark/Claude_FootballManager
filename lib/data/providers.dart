@@ -82,3 +82,9 @@ final settingsRepositoryProvider = Provider(
 final preferencesProvider = StreamProvider.family<GroupPreferences, String>(
   (ref, groupId) => ref.watch(settingsRepositoryProvider).watch(groupId),
 );
+
+/// 마지막 공유 이후 바뀐 항목 수 (한 번도 공유하지 않았으면 null).
+final unsharedChangesProvider = StreamProvider.family<int?, String>(
+  (ref, groupId) =>
+      ref.watch(groupRepositoryProvider).watchUnsharedChanges(groupId),
+);

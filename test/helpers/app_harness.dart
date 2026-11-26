@@ -12,6 +12,7 @@ import 'package:futsalteammaker/data/providers.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:futsalteammaker/features/tutorial/tutorial.dart';
 import 'package:futsalteammaker/features/share/share_service.dart';
+import 'package:futsalteammaker/features/invite/invite_actions.dart';
 
 /// 공유 시트·클립보드 대신 기록만 한다.
 class FakeShareService extends ShareService {
@@ -36,6 +37,12 @@ class FakeShareService extends ShareService {
 /// 테스트마다 새로 만든다 ([pumpApp]이 초기화).
 FakeShareService fakeShare = FakeShareService();
 
+/// 앱 시작 때 읽히는 클립보드 내용 (설치 직후 초대 감지 테스트용).
+String? fakeClipboard;
+
+/// 다음 [pumpApp] 한 번에만 쓸 클립보드 내용.
+String? fakeClipboardNext;
+
 /// 가로 폰 (800×360dp).
 const landscapePhone = Size(800, 360);
 
@@ -50,6 +57,8 @@ Future<AppDatabase> pumpApp(
 }) async {
   driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
   fakeShare = FakeShareService();
+  fakeClipboard = fakeClipboardNext;
+  fakeClipboardNext = null;
   tester.view.physicalSize = size * 2;
   tester.view.devicePixelRatio = 2;
   addTearDown(tester.view.reset);
@@ -64,6 +73,7 @@ Future<AppDatabase> pumpApp(
         deviceIdProvider.overrideWithValue('test-device'),
         tutorialEnabledProvider.overrideWithValue(tutorials),
         shareServiceProvider.overrideWithValue(fakeShare),
+        clipboardTextProvider.overrideWithValue(() async => fakeClipboard),
         ...overrides,
         // 테스트에서는 isolate 없이 바로 계산 (가짜 시간과 충돌 방지).
         balancerRunnerProvider.overrideWithValue(

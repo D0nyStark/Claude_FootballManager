@@ -18,6 +18,7 @@ class GroupInfo {
     required this.lastUsedAt,
     this.myDisplayName,
     this.playerCount = 0,
+    this.lastSharedAt,
   });
 
   factory GroupInfo.fromRow(GroupRow row, {int playerCount = 0}) => GroupInfo(
@@ -31,6 +32,7 @@ class GroupInfo {
     lastUsedAt: row.lastUsedAt,
     myDisplayName: row.myDisplayName,
     playerCount: playerCount,
+    lastSharedAt: row.lastSharedAt,
   );
 
   /// 생성 마법사 단계 수 (모임 정보·선수 명단·간단 스펙·초대).
@@ -46,6 +48,9 @@ class GroupInfo {
   final DateTime lastUsedAt;
   final String? myDisplayName;
   final int playerCount;
+
+  /// 마지막으로 초대·변경 공유를 보내거나 받은 시각.
+  final DateTime? lastSharedAt;
 
   bool get onboardingDone => onboardingStep >= onboardingSteps;
 }
@@ -145,6 +150,37 @@ class GroupRepository {
       (_db.update(_db.groups)..where((g) => g.id.equals(id))).write(
         GroupsCompanion(onboardingStep: Value(step)),
       );
+
+  /// 초대 링크·변경 공유를 보낸 시각 기록.
+  Future<void> markShared(String id) =>
+      (_db.update(_db.groups)..where((g) => g.id.equals(id))).write(
+        GroupsCompanion(lastSharedAt: Value(_now())),
+      );
+
+  /// 마지막 공유 이후 바뀐 항목 수 ("공유 안 된 변경 N건", SPEC F13.4).
+  /// 한 번도 공유하지 않았으면 null.
+  Stream<int?> watchUnsharedChanges(String id) {
+    final query = _db.customSelect(
+      'SELECT g.last_shared_at AS since, '
+      '(SELECT COUNT(*) FROM players p WHERE p.group_id = g.id AND p.updated_at > g.last_shared_at) + '
+      '(SELECT COUNT(*) FROM player_constraints c WHERE c.group_id = g.id AND c.updated_at > g.last_shared_at) + '
+      '(SELECT COUNT(*) FROM lineup_histories h WHERE h.group_id = g.id AND h.updated_at > g.last_shared_at) + '
+      '(SELECT COUNT(*) FROM group_settings s WHERE s.group_id = g.id AND s.updated_at > g.last_shared_at) AS n '
+      'FROM groups g WHERE g.id = ?',
+      variables: [Variable.withString(id)],
+      readsFrom: {
+        _db.groups,
+        _db.players,
+        _db.playerConstraints,
+        _db.lineupHistories,
+        _db.groupSettings,
+      },
+    );
+    return query.watchSingleOrNull().map((row) {
+      if (row == null || row.data['since'] == null) return null;
+      return row.read<int>('n');
+    });
+  }
 
   /// 모임에 들어갈 때 호출 → 목록에서 최근 사용 순 정렬.
   Future<void> touch(String id) =>

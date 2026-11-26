@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="futsalteammaker"
+        android:label="풋살 팀메이커"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
@@ -23,6 +23,13 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- 초대 링크: 안내 페이지의 [앱에서 열기] → futsalteammaker://join?d=MUG2:… (SPEC F13.2) -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="futsalteammaker" android:host="join"/>
             </intent-filter>
         </activity>
         <!-- Don't delete the meta-data below.

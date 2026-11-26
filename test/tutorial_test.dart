@@ -79,9 +79,9 @@ void main() {
     await tapAndSettle(tester, find.text('⚽ 수요풋살'));
     await waitForTutorial(tester);
     expect(find.text('오늘 매치 시작'), findsOneWidget);
-    // 마무리 배너가 없는 모임 → 홈 4단계 (형식·선수·설정·모임 목록)
-    expect(find.text('1/4'), findsOneWidget);
-    for (var i = 0; i < 3; i++) {
+    // 마무리 배너가 없는 모임 → 홈 6단계 (형식·선수·설정·초대·변경 공유·모임 목록)
+    expect(find.text('1/6'), findsOneWidget);
+    for (var i = 0; i < 5; i++) {
       await tapAndSettle(tester, find.text('다음'));
     }
     await tapAndSettle(tester, find.text('완료'));

@@ -32,6 +32,9 @@ class Groups extends Table {
   DateTimeColumn get updatedAt => dateTime()();
   DateTimeColumn get lastUsedAt => dateTime()();
 
+  /// 마지막으로 초대 링크·변경 공유를 보내거나 받은 시각 ("공유 안 된 변경 N건" 기준).
+  DateTimeColumn get lastSharedAt => dateTime().nullable()();
+
   @override
   Set<Column> get primaryKey => {id};
 }

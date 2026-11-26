@@ -11,6 +11,10 @@ import '../tutorial/tutorial.dart';
 import '../tutorial/tutorial_steps.dart';
 import '../backup/backup_actions.dart';
 
+import 'dart:async';
+
+import '../invite/invite_actions.dart';
+
 /// 첫 화면: 모임 목록 (SPEC F11, §8.2).
 class GroupListPage extends ConsumerStatefulWidget {
   const GroupListPage({super.key, this.autoEnterSingleGroup = true});
@@ -23,8 +27,31 @@ class GroupListPage extends ConsumerStatefulWidget {
 }
 
 class _GroupListPageState extends ConsumerState<GroupListPage> {
+  StreamSubscription<String>? _links;
   bool _autoEnterChecked = false;
   bool _autoEntering = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 앱이 초대 링크로 열리면 바로 처리 (SPEC F13.2).
+    _links = ref.read(incomingLinksProvider).listen((link) {
+      if (mounted) handleIncoming(context, ref, link);
+    });
+    // 설치 직후 첫 실행: 안내 페이지에서 복사한 초대가 클립보드에 있으면 묻는다 (SPEC F13.3).
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final text = await ref.read(clipboardTextProvider)();
+      if (text != null && mounted) {
+        await handleIncoming(context, ref, text, quiet: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _links?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,8 +86,8 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
             CoachTarget(
               id: 'groups.join',
               child: TextButton.icon(
-                // 초대 링크 참여는 M6.5에서 구현.
-                onPressed: null,
+                key: const Key('joinByLink'),
+                onPressed: () => askAndJoin(context, ref),
                 icon: const Icon(Icons.link),
                 label: const Text('초대 링크로 참여'),
               ),

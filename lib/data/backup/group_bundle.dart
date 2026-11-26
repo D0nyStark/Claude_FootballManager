@@ -117,6 +117,9 @@ class ImportSummary {
   int updated = 0;
   int deleted = 0;
   bool createdGroup = false;
+  bool roleUpgraded = false;
+
+  bool get isEmpty => added == 0 && updated == 0 && deleted == 0;
 
   @override
   String toString() => '추가 $added · 수정 $updated · 삭제 $deleted';
@@ -182,12 +185,40 @@ class BundleService {
       )..where((t) => t.id.equals(groupId))).getSingleOrNull() !=
       null;
 
-  /// [bundle]을 이 기기에 반영한다. 모임이 없으면 새로 만든다 ([newGroupRole] 역할).
+  /// [bundle]을 이 기기에 반영한다.
+  ///
+  /// - 모임이 없으면 [role] 역할로 새로 만든다.
+  /// - 이미 있고 [role]이 운영진이면 멤버를 운영진으로 올린다 (내리지는 않는다).
+  /// - 능력치가 빠진 묶음(멤버가 보낸 변경)은 이 기기의 능력치를 그대로 둔다.
   Future<ImportSummary> import(
     GroupBundle bundle, {
     required ImportMode mode,
-    String newGroupRole = 'owner',
-  }) => _db.transaction(() async {
+    String role = 'owner',
+  }) => _db.transaction(() => _import(bundle, mode, role));
+
+  /// 실제로 저장하지 않고 "추가·수정·삭제" 건수만 계산한다 (변경 사항 미리보기).
+  Future<ImportSummary> preview(
+    GroupBundle bundle, {
+    ImportMode mode = ImportMode.merge,
+  }) async {
+    ImportSummary? summary;
+    try {
+      await _db.transaction(() async {
+        summary = await _import(bundle, mode, 'member');
+        throw const _Rollback();
+      });
+    } on _Rollback {
+      // 되돌림
+    }
+    return summary!;
+  }
+
+  Future<ImportSummary> _import(
+    GroupBundle bundle,
+    ImportMode mode,
+    String role,
+  ) async {
+    final newGroupRole = role;
     final summary = ImportSummary();
     final gid = bundle.groupId;
     final now = _now();
@@ -214,7 +245,16 @@ class BundleService {
               lastUsedAt: now,
             ),
           );
-    } else if (mode == ImportMode.overwrite) {
+    } else {
+      if (role == GroupRole.manager.name &&
+          existing.myRole == GroupRole.member) {
+        await (_db.update(_db.groups)..where((t) => t.id.equals(gid))).write(
+          const GroupsCompanion(myRole: Value(GroupRole.manager)),
+        );
+        summary.roleUpgraded = true;
+      }
+    }
+    if (existing != null && mode == ImportMode.overwrite) {
       await (_db.update(_db.groups)..where((t) => t.id.equals(gid))).write(
         GroupsCompanion(
           name: Value(g['name'] as String),
@@ -248,7 +288,17 @@ class BundleService {
         p.id: p,
     };
     for (final j in bundle.players) {
-      final incoming = PlayerRow.fromJson(withGroup(j));
+      var data = withGroup(j);
+      if (!data.containsKey('shooting')) {
+        // 능력치 없는 변경: 이 기기의 능력치 유지, 새 선수는 기본 3점(간단).
+        final local = localPlayers[data['id']]?.toJson();
+        data = {
+          ...data,
+          for (final s in _statKeys) s: local?[s] ?? 3,
+          'statsSimple': local?['statsSimple'] ?? true,
+        };
+      }
+      final incoming = PlayerRow.fromJson(data);
       _count(
         summary,
         localPlayers[incoming.id]?.updatedAt,
@@ -317,8 +367,21 @@ class BundleService {
         await _db.into(_db.groupSettings).insertOnConflictUpdate(incoming);
       }
     }
+    await (_db.update(_db.groups)..where((t) => t.id.equals(gid))).write(
+      GroupsCompanion(lastSharedAt: Value(now)),
+    );
     return summary;
-  });
+  }
+
+  static const _statKeys = [
+    'shooting',
+    'dribbling',
+    'speed',
+    'passing',
+    'physical',
+    'creativity',
+    'teamwork',
+  ];
 
   static bool _newer(DateTime? local, DateTime incoming) =>
       local == null || incoming.isAfter(local);
@@ -350,4 +413,8 @@ class BundleService {
 
   static MatchFormat _format(String? name) =>
       _byName(MatchFormat.values, name, MatchFormat.fiveVsFive);
+}
+
+class _Rollback implements Exception {
+  const _Rollback();
 }

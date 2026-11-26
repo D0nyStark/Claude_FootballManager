@@ -132,7 +132,7 @@ void main() {
       final summary = await BundleService(other, 'devB').import(
         GroupBundle.decode(text),
         mode: ImportMode.merge,
-        newGroupRole: 'manager',
+        role: 'manager',
       );
       expect(summary.createdGroup, isTrue);
       expect(summary.added, 4); // 선수 3 + 제약 1

@@ -26,6 +26,7 @@ import '../../data/repositories/player_repository.dart';
 import '../share/share_service.dart';
 import '../share/share_sheet.dart';
 import '../share/share_text.dart';
+import '../invite/invite_actions.dart';
 
 /// 구장 화면 (SPEC F4·F5·F7, §8.4): 반쪽 구장을 나란히 놓고 포지션 원에 선수를 배치한다.
 ///
@@ -427,6 +428,9 @@ class _PitchPageState extends ConsumerState<PitchPage>
       canIncludeStats: _canSeeStats,
       text: (withStats) => _shareText(lineup, withStats),
       image: () => _captureImage(),
+      updateLink: () => updateLinkText(ref, widget.group),
+      onLinkShared: () =>
+          ref.read(groupRepositoryProvider).markShared(widget.group.id),
     );
   }
 

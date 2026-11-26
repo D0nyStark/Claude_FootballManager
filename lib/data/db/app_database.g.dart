@@ -121,6 +121,17 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, GroupRow> {
     type: DriftSqlType.dateTime,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _lastSharedAtMeta = const VerificationMeta(
+    'lastSharedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> lastSharedAt = GeneratedColumn<DateTime>(
+    'last_shared_at',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -134,6 +145,7 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, GroupRow> {
     createdAt,
     updatedAt,
     lastUsedAt,
+    lastSharedAt,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -217,6 +229,15 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, GroupRow> {
     } else if (isInserting) {
       context.missing(_lastUsedAtMeta);
     }
+    if (data.containsKey('last_shared_at')) {
+      context.handle(
+        _lastSharedAtMeta,
+        lastSharedAt.isAcceptableOrUnknown(
+          data['last_shared_at']!,
+          _lastSharedAtMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -274,6 +295,10 @@ class $GroupsTable extends Groups with TableInfo<$GroupsTable, GroupRow> {
         DriftSqlType.dateTime,
         data['${effectivePrefix}last_used_at'],
       )!,
+      lastSharedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}last_shared_at'],
+      ),
     );
   }
 
@@ -304,6 +329,9 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
   final DateTime createdAt;
   final DateTime updatedAt;
   final DateTime lastUsedAt;
+
+  /// 마지막으로 초대 링크·변경 공유를 보내거나 받은 시각 ("공유 안 된 변경 N건" 기준).
+  final DateTime? lastSharedAt;
   const GroupRow({
     required this.id,
     required this.name,
@@ -316,6 +344,7 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
     required this.createdAt,
     required this.updatedAt,
     required this.lastUsedAt,
+    this.lastSharedAt,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -341,6 +370,9 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     map['last_used_at'] = Variable<DateTime>(lastUsedAt);
+    if (!nullToAbsent || lastSharedAt != null) {
+      map['last_shared_at'] = Variable<DateTime>(lastSharedAt);
+    }
     return map;
   }
 
@@ -359,6 +391,9 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
       lastUsedAt: Value(lastUsedAt),
+      lastSharedAt: lastSharedAt == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSharedAt),
     );
   }
 
@@ -383,6 +418,7 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
       lastUsedAt: serializer.fromJson<DateTime>(json['lastUsedAt']),
+      lastSharedAt: serializer.fromJson<DateTime?>(json['lastSharedAt']),
     );
   }
   @override
@@ -404,6 +440,7 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
       'lastUsedAt': serializer.toJson<DateTime>(lastUsedAt),
+      'lastSharedAt': serializer.toJson<DateTime?>(lastSharedAt),
     };
   }
 
@@ -419,6 +456,7 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
     DateTime? createdAt,
     DateTime? updatedAt,
     DateTime? lastUsedAt,
+    Value<DateTime?> lastSharedAt = const Value.absent(),
   }) => GroupRow(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -433,6 +471,7 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
     lastUsedAt: lastUsedAt ?? this.lastUsedAt,
+    lastSharedAt: lastSharedAt.present ? lastSharedAt.value : this.lastSharedAt,
   );
   GroupRow copyWithCompanion(GroupsCompanion data) {
     return GroupRow(
@@ -455,6 +494,9 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
       lastUsedAt: data.lastUsedAt.present
           ? data.lastUsedAt.value
           : this.lastUsedAt,
+      lastSharedAt: data.lastSharedAt.present
+          ? data.lastSharedAt.value
+          : this.lastSharedAt,
     );
   }
 
@@ -471,7 +513,8 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
           ..write('onboardingStep: $onboardingStep, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('lastUsedAt: $lastUsedAt')
+          ..write('lastUsedAt: $lastUsedAt, ')
+          ..write('lastSharedAt: $lastSharedAt')
           ..write(')'))
         .toString();
   }
@@ -489,6 +532,7 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
     createdAt,
     updatedAt,
     lastUsedAt,
+    lastSharedAt,
   );
   @override
   bool operator ==(Object other) =>
@@ -504,7 +548,8 @@ class GroupRow extends DataClass implements Insertable<GroupRow> {
           other.onboardingStep == this.onboardingStep &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.lastUsedAt == this.lastUsedAt);
+          other.lastUsedAt == this.lastUsedAt &&
+          other.lastSharedAt == this.lastSharedAt);
 }
 
 class GroupsCompanion extends UpdateCompanion<GroupRow> {
@@ -519,6 +564,7 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<DateTime> lastUsedAt;
+  final Value<DateTime?> lastSharedAt;
   final Value<int> rowid;
   const GroupsCompanion({
     this.id = const Value.absent(),
@@ -532,6 +578,7 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.lastUsedAt = const Value.absent(),
+    this.lastSharedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   GroupsCompanion.insert({
@@ -546,6 +593,7 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
     required DateTime createdAt,
     required DateTime updatedAt,
     required DateTime lastUsedAt,
+    this.lastSharedAt = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -565,6 +613,7 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<DateTime>? lastUsedAt,
+    Expression<DateTime>? lastSharedAt,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -579,6 +628,7 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (lastUsedAt != null) 'last_used_at': lastUsedAt,
+      if (lastSharedAt != null) 'last_shared_at': lastSharedAt,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -595,6 +645,7 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<DateTime>? lastUsedAt,
+    Value<DateTime?>? lastSharedAt,
     Value<int>? rowid,
   }) {
     return GroupsCompanion(
@@ -609,6 +660,7 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       lastUsedAt: lastUsedAt ?? this.lastUsedAt,
+      lastSharedAt: lastSharedAt ?? this.lastSharedAt,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -653,6 +705,9 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
     if (lastUsedAt.present) {
       map['last_used_at'] = Variable<DateTime>(lastUsedAt.value);
     }
+    if (lastSharedAt.present) {
+      map['last_shared_at'] = Variable<DateTime>(lastSharedAt.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -673,6 +728,7 @@ class GroupsCompanion extends UpdateCompanion<GroupRow> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('lastUsedAt: $lastUsedAt, ')
+          ..write('lastSharedAt: $lastSharedAt, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -3806,6 +3862,7 @@ typedef $$GroupsTableCreateCompanionBuilder = GroupsCompanion Function({
   required DateTime createdAt,
   required DateTime updatedAt,
   required DateTime lastUsedAt,
+  Value<DateTime?> lastSharedAt,
   Value<int> rowid,
 });
 typedef $$GroupsTableUpdateCompanionBuilder = GroupsCompanion Function({
@@ -3820,6 +3877,7 @@ typedef $$GroupsTableUpdateCompanionBuilder = GroupsCompanion Function({
   Value<DateTime> createdAt,
   Value<DateTime> updatedAt,
   Value<DateTime> lastUsedAt,
+  Value<DateTime?> lastSharedAt,
   Value<int> rowid,
 });
 
@@ -3987,6 +4045,11 @@ class $$GroupsTableFilterComposer
 
   ColumnFilters<DateTime> get lastUsedAt => $composableBuilder(
     column: $table.lastUsedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get lastSharedAt => $composableBuilder(
+    column: $table.lastSharedAt,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -4179,6 +4242,11 @@ class $$GroupsTableOrderingComposer
     column: $table.lastUsedAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get lastSharedAt => $composableBuilder(
+    column: $table.lastSharedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$GroupsTableAnnotationComposer
@@ -4229,6 +4297,11 @@ class $$GroupsTableAnnotationComposer
 
   GeneratedColumn<DateTime> get lastUsedAt => $composableBuilder(
     column: $table.lastUsedAt,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get lastSharedAt => $composableBuilder(
+    column: $table.lastSharedAt,
     builder: (column) => column,
   );
 
@@ -4404,6 +4477,7 @@ class $$GroupsTableTableManager
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<DateTime> lastUsedAt = const Value.absent(),
+                Value<DateTime?> lastSharedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GroupsCompanion(
                 id: id,
@@ -4417,6 +4491,7 @@ class $$GroupsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 lastUsedAt: lastUsedAt,
+                lastSharedAt: lastSharedAt,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -4432,6 +4507,7 @@ class $$GroupsTableTableManager
                 required DateTime createdAt,
                 required DateTime updatedAt,
                 required DateTime lastUsedAt,
+                Value<DateTime?> lastSharedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => GroupsCompanion.insert(
                 id: id,
@@ -4445,6 +4521,7 @@ class $$GroupsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 lastUsedAt: lastUsedAt,
+                lastSharedAt: lastSharedAt,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

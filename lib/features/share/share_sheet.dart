@@ -12,6 +12,8 @@ Future<void> showShareSheet(
   Future<Uint8List?> Function()? image,
   bool canIncludeStats = true,
   String title = '편성 공유',
+  Future<String> Function()? updateLink,
+  Future<void> Function()? onLinkShared,
 }) => showModalBottomSheet<void>(
   context: context,
   showDragHandle: true,
@@ -27,6 +29,8 @@ Future<void> showShareSheet(
     image: image,
     canIncludeStats: canIncludeStats,
     title: title,
+    updateLink: updateLink,
+    onLinkShared: onLinkShared,
   ),
 );
 
@@ -37,6 +41,8 @@ class _ShareSheet extends StatefulWidget {
     required this.image,
     required this.canIncludeStats,
     required this.title,
+    this.updateLink,
+    this.onLinkShared,
   });
 
   final ShareService service;
@@ -44,6 +50,10 @@ class _ShareSheet extends StatefulWidget {
   final Future<Uint8List?> Function()? image;
   final bool canIncludeStats;
   final String title;
+
+  /// "모임 업데이트 링크 함께 보내기" (SPEC F13.4).
+  final Future<String> Function()? updateLink;
+  final Future<void> Function()? onLinkShared;
 
   @override
   State<_ShareSheet> createState() => _ShareSheetState();
@@ -53,12 +63,27 @@ class _ShareSheetState extends State<_ShareSheet> {
   /// 기본: 능력치 숨김, 밸런스 점수만 (SPEC F8.3).
   bool _withStats = false;
   bool _busy = false;
+  bool _withLink = false;
+  String? _link;
+
+  Future<void> _toggleLink(bool on) async {
+    if (on && _link == null) {
+      setState(() => _busy = true);
+      _link = await widget.updateLink!();
+      if (!mounted) return;
+    }
+    setState(() {
+      _withLink = on;
+      _busy = false;
+    });
+  }
 
   Future<void> _do(Future<void> Function() action, String done) async {
     if (_busy) return;
     setState(() => _busy = true);
     try {
       await action();
+      if (_withLink) await widget.onLinkShared?.call();
       if (!mounted) return;
       final messenger = ScaffoldMessenger.of(context);
       Navigator.pop(context);
@@ -71,7 +96,8 @@ class _ShareSheetState extends State<_ShareSheet> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final preview = widget.text(_withStats);
+    final base = widget.text(_withStats);
+    final preview = _withLink && _link != null ? '$base\n\n$_link' : base;
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
@@ -105,6 +131,16 @@ class _ShareSheetState extends State<_ShareSheet> {
                       title: const Text('팀별 OVR 포함'),
                       value: _withStats,
                       onChanged: (v) => setState(() => _withStats = v),
+                    ),
+                  if (widget.updateLink != null)
+                    SwitchListTile(
+                      key: const Key('withUpdateLink'),
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('모임 업데이트 링크 함께 보내기'),
+                      subtitle: const Text('받은 사람의 선수 명단·이력도 함께 맞춰져요'),
+                      value: _withLink,
+                      onChanged: _busy ? null : _toggleLink,
                     ),
                 ],
               ),
