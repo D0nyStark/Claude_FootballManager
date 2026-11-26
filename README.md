@@ -20,6 +20,16 @@ lib/
 test/core/         # 엔진·점수 단위 테스트 (SPEC §6.8 품질 목표 포함)
 ```
 
+## 데모 설치 (Android)
+
+1. `flutter build apk --release` → `build/app/outputs/flutter-apk/app-release.apk`
+2. APK를 GitHub Releases에 올린다 (안내 페이지의 [앱 설치]가 `releases/latest`로 연결됨).
+3. 폰에서 APK를 받아 설치 → "출처를 알 수 없는 앱 설치" 허용이 필요할 수 있다.
+
+- 지원: Android 7.0(API 24) 이상, 가로 모드 전용
+- 데모 빌드는 **디버그 키로 서명**되어 있다. 스토어 출시 전에는 별도 서명 키를 만들어 `android/key.properties`로 연결해야 한다 (키 파일은 저장소에 올리지 않는다).
+- 앱 아이콘: `python3 tool/make_icon.py`로 다시 만들 수 있다.
+
 ## 초대 링크 안내 페이지
 
 `docs/join.html`을 GitHub Pages로 올린다 (저장소 Settings → Pages → Branch: `main` / `/docs`).
@@ -49,4 +59,5 @@ flutter build apk      # 데모 배포용 APK
 | M5 수동 수정 (끌어서 맞교환·후보 교체, 📌 고정, 되돌리기/다시하기/초기화, 팀 이름·색) | ✅ |
 | M6 확정·공유·백업 (편성 이력 3개·반복 회피 연결, 텍스트/이미지 공유, .mug 백업·병합, 모임 설정) | ✅ |
 | M6.5 초대 링크 (MUG2 짧은 형식, 운영진/멤버 초대, 변경 공유, 안내 페이지, 클립보드 감지) | ✅ |
-| M7 데모 배포 | ⏳ |
+| M7 데모 빌드 (앱 아이콘, 릴리스 APK: arm64 21.7MB / 범용 62MB) | ✅ |
+| 실기기 시범 사용 · 피드백 반영 | ⏳ |
