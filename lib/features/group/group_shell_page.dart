@@ -40,45 +40,58 @@ class _GroupShellPageState extends ConsumerState<GroupShellPage> {
               }
               return Row(
                 children: [
-                  NavigationRail(
-                    selectedIndex: _index,
-                    onDestinationSelected: (i) => setState(() => _index = i),
-                    labelType: NavigationRailLabelType.all,
-                    leading: Tooltip(
-                      message: '모임 목록',
-                      child: CoachTarget(
-                        id: 'shell.groups',
-                        child: IconButton(
-                          icon: const Icon(Icons.swap_horiz),
-                          onPressed: () =>
-                              Navigator.of(context)
-                                  .popUntil((route) => route.isFirst),
+                  // 키보드가 올라와 높이가 모자라면 세로 메뉴를 스크롤한다.
+                  LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minHeight: constraints.maxHeight,
+                        ),
+                        child: IntrinsicHeight(
+                          child: NavigationRail(
+                            selectedIndex: _index,
+                            onDestinationSelected: (i) =>
+                                setState(() => _index = i),
+                            labelType: NavigationRailLabelType.all,
+                            leading: Tooltip(
+                              message: '모임 목록',
+                              child: CoachTarget(
+                                id: 'shell.groups',
+                                child: IconButton(
+                                  icon: const Icon(Icons.swap_horiz),
+                                  onPressed: () =>
+                                      Navigator.of(context)
+                                          .popUntil((route) => route.isFirst),
+                                ),
+                              ),
+                            ),
+                            destinations: const [
+                              NavigationRailDestination(
+                                icon: Icon(Icons.home_outlined),
+                                selectedIcon: Icon(Icons.home),
+                                label: Text('홈'),
+                              ),
+                              NavigationRailDestination(
+                                icon: CoachTarget(
+                                  id: 'shell.players',
+                                  child: Icon(Icons.groups_outlined),
+                                ),
+                                selectedIcon: Icon(Icons.groups),
+                                label: Text('선수'),
+                              ),
+                              NavigationRailDestination(
+                                icon: CoachTarget(
+                                  id: 'shell.settings',
+                                  child: Icon(Icons.settings_outlined),
+                                ),
+                                selectedIcon: Icon(Icons.settings),
+                                label: Text('설정'),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                    destinations: const [
-                      NavigationRailDestination(
-                        icon: Icon(Icons.home_outlined),
-                        selectedIcon: Icon(Icons.home),
-                        label: Text('홈'),
-                      ),
-                      NavigationRailDestination(
-                        icon: CoachTarget(
-                          id: 'shell.players',
-                          child: Icon(Icons.groups_outlined),
-                        ),
-                        selectedIcon: Icon(Icons.groups),
-                        label: Text('선수'),
-                      ),
-                      NavigationRailDestination(
-                        icon: CoachTarget(
-                          id: 'shell.settings',
-                          child: Icon(Icons.settings_outlined),
-                        ),
-                        selectedIcon: Icon(Icons.settings),
-                        label: Text('설정'),
-                      ),
-                    ],
                   ),
                   const VerticalDivider(width: 1),
                   Expanded(

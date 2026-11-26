@@ -39,6 +39,12 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   // ② 선수 명단
   final _paste = TextEditingController();
   final _single = TextEditingController();
+  late final _singleFocus = FocusNode()..addListener(_onFocus);
+
+  void _onFocus() {
+    if (mounted) setState(() {});
+  }
+
   final List<String> _pending = [];
 
   // ③ 간단 스펙: 선수 id → 수정값
@@ -72,6 +78,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     _myName.dispose();
     _paste.dispose();
     _single.dispose();
+    _singleFocus.dispose();
     super.dispose();
   }
 
@@ -100,8 +107,9 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   });
 
   /// 나중에 하기: 지금 단계를 기억해 두고 모임 홈으로.
+  /// 나중에 하기: 지금 단계에서 입력한 내용(모임 정보·명단·간단 스펙)은 저장하고 모임 홈으로.
   Future<void> _later() => _run(() async {
-    if (_step == 0) await _saveStep();
+    await _saveStep();
     await _finish(_step);
   });
 
@@ -173,15 +181,28 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 가로 화면에서 키보드가 올라오면 남는 높이가 아주 적다 → 버튼을 제목줄로 올리고 제목줄도 낮춘다.
+    final keyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
     return Scaffold(
       appBar: AppBar(
+        toolbarHeight: keyboard ? 44 : null,
         title: Text(_groupId == null ? '새 모임 만들기' : '모임 설정 마무리'),
         actions: [
           TextButton(
             onPressed: _busy ? null : _later,
             child: const Text('나중에 하기'),
           ),
-          const SizedBox(width: 8),
+          if (_step > 0)
+            TextButton(
+              onPressed: _busy ? null : () => _next(save: false),
+              child: const Text('건너뛰기'),
+            ),
+          const SizedBox(width: 4),
+          FilledButton(
+            onPressed: _busy ? null : () => _next(save: true),
+            child: Text(_step >= 3 ? '완료' : '다음 →'),
+          ),
+          const SizedBox(width: 12),
         ],
       ),
       body: Row(
@@ -245,39 +266,14 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           ),
           const VerticalDivider(width: 1),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-                    child: switch (_step) {
-                      0 => _infoStep(theme),
-                      1 => _rosterStep(theme),
-                      2 => _specStep(theme),
-                      _ => _inviteStep(theme),
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (_step > 0)
-                        TextButton(
-                          onPressed: _busy ? null : () => _next(save: false),
-                          child: const Text('건너뛰기'),
-                        ),
-                      const SizedBox(width: 8),
-                      FilledButton(
-                        onPressed: _busy ? null : () => _next(save: true),
-                        child: Text(_step >= 3 ? '완료' : '다음 →'),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(24, keyboard ? 4 : 16, 24, 8),
+              child: switch (_step) {
+                0 => _infoStep(theme),
+                1 => _rosterStep(theme, keyboard: keyboard),
+                2 => _specStep(theme),
+                _ => _inviteStep(theme),
+              },
             ),
           ),
         ],
@@ -355,7 +351,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     ),
   );
 
-  Widget _rosterStep(ThemeData theme) {
+  Widget _rosterStep(ThemeData theme, {required bool keyboard}) {
     final existing = ref.watch(playersProvider(_groupId!)).value ?? const [];
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,19 +359,32 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
         Expanded(
           child: ListView(
             children: [
-              Text(
-                '단톡방 멤버 목록 등을 복사해 붙여넣으면 이름을 자동으로 나눠요.',
-                style: theme.textTheme.bodyMedium,
+              // 키보드가 올라오면 숨긴다. 목록(ListView)에서 항목을 빼면 아래 입력창이
+              // 새로 만들어져 키보드가 닫히므로, 빼지 않고 Visibility로 가리기만 한다.
+              Visibility(
+                visible: !keyboard,
+                maintainState: true,
+                child: Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    '단톡방 멤버 목록 등을 복사해 붙여넣으면 이름을 자동으로 나눠요.',
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                key: const Key('rosterPaste'),
-                controller: _paste,
-                minLines: 4,
-                maxLines: 6,
-                decoration: const InputDecoration(
-                  border: OutlineInputBorder(),
-                  hintText: '김철수\n이영희, 박민수 …',
+              // 한 명씩 입력 중이면 붙여넣기 칸을 가려 입력창이 키보드 위에 보이게 한다.
+              Visibility(
+                visible: !(keyboard && _singleFocus.hasFocus),
+                maintainState: true,
+                child: TextField(
+                  key: const Key('rosterPaste'),
+                  controller: _paste,
+                  minLines: keyboard ? 2 : 4,
+                  maxLines: keyboard ? 3 : 6,
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    hintText: '김철수\n이영희, 박민수 …',
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -385,11 +394,17 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                     child: TextField(
                       key: const Key('rosterSingle'),
                       controller: _single,
+                      focusNode: _singleFocus,
                       decoration: const InputDecoration(
-                        hintText: '한 명씩 추가',
+                        hintText: '한 명씩 추가 (입력 후 완료)',
                         isDense: true,
                       ),
-                      onSubmitted: (_) => _addPasted(),
+                      textInputAction: TextInputAction.done,
+                      // 키보드를 닫지 않고 바로 다음 이름을 입력할 수 있게.
+                      onSubmitted: (_) {
+                        _addPasted();
+                        _singleFocus.requestFocus();
+                      },
                     ),
                   ),
                   const SizedBox(width: 8),

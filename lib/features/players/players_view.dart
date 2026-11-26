@@ -49,40 +49,11 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
         children: [
           SizedBox(
             width: 320,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
-                  child: CoachTarget(
-                    id: 'players.constraints',
-                    child: SegmentedButton<_Tab>(
-                      segments: const [
-                        ButtonSegment(value: _Tab.players, label: Text('선수')),
-                        ButtonSegment(
-                          value: _Tab.constraints,
-                          label: Text('같은 팀/다른 팀'),
-                        ),
-                      ],
-                      selected: {_tab},
-                      onSelectionChanged: (s) => setState(() => _tab = s.first),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: _tab == _Tab.players
-                      ? players.when(
-                          loading: () =>
-                              const Center(child: CircularProgressIndicator()),
-                          error: (e, _) => Center(child: Text('$e')),
-                          data: _playerList,
-                        )
-                      : ConstraintsView(
-                          groupId: widget.group.id,
-                          players: players.value ?? const [],
-                        ),
-                ),
-              ],
+            // 키보드가 올라오는 등 남는 높이가 적으면 탭·필터를 숨긴다 (가로 화면).
+            // Scaffold 안쪽에서는 키보드 높이가 0으로 전달되므로 실제 높이로 판단한다.
+            child: LayoutBuilder(
+              builder: (context, box) =>
+                  _leftPanel(players, compact: box.maxHeight < _compactHeight),
             ),
           ),
           const VerticalDivider(width: 1),
@@ -92,7 +63,49 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
     );
   }
 
-  Widget _playerList(List<Player> all) {
+  /// 이보다 낮으면 선수 목록을 간단히 (검색 + 목록만).
+  static const double _compactHeight = 240;
+
+  Widget _leftPanel(
+    AsyncValue<List<Player>> players, {
+    required bool compact,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (!compact)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+          child: CoachTarget(
+            id: 'players.constraints',
+            child: SegmentedButton<_Tab>(
+              segments: const [
+                ButtonSegment(value: _Tab.players, label: Text('선수')),
+                ButtonSegment(
+                  value: _Tab.constraints,
+                  label: Text('같은 팀/다른 팀'),
+                ),
+              ],
+              selected: {_tab},
+              onSelectionChanged: (s) => setState(() => _tab = s.first),
+            ),
+          ),
+        ),
+      Expanded(
+        child: _tab == _Tab.players
+            ? players.when(
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('$e')),
+                data: (all) => _playerList(all, compact: compact),
+              )
+            : ConstraintsView(
+                groupId: widget.group.id,
+                players: players.value ?? const [],
+              ),
+      ),
+    ],
+  );
+
+  Widget _playerList(List<Player> all, {bool compact = false}) {
     final theme = Theme.of(context);
     final q = _query.trim();
     final filtered = [
@@ -151,25 +164,26 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
             ],
           ),
         ),
-        SizedBox(
-          height: 52,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            children: [
-              for (final pos in [null, ...Position.values])
-                Padding(
-                  padding: const EdgeInsets.only(right: 6),
-                  child: ChoiceChip(
-                    visualDensity: VisualDensity.compact,
-                    label: Text(pos?.label ?? '전체'),
-                    selected: _filter == pos,
-                    onSelected: (_) => setState(() => _filter = pos),
+        if (!compact)
+          SizedBox(
+            height: 52,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              children: [
+                for (final pos in [null, ...Position.values])
+                  Padding(
+                    padding: const EdgeInsets.only(right: 6),
+                    child: ChoiceChip(
+                      visualDensity: VisualDensity.compact,
+                      label: Text(pos?.label ?? '전체'),
+                      selected: _filter == pos,
+                      onSelected: (_) => setState(() => _filter = pos),
+                    ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
         Expanded(
           child: all.isEmpty
               ? const Center(child: Text('선수를 추가해 주세요.'))

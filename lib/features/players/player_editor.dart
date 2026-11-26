@@ -101,20 +101,41 @@ class _PlayerEditorState extends ConsumerState<PlayerEditor> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // 저장 버튼은 위쪽 고정: 가로 화면에서 키보드가 올라와도 가려지지 않게.
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 6, 8, 0),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  _isNew ? '새 선수' : widget.player!.name,
+                  style: theme.textTheme.titleLarge,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (!_isNew)
+                IconButton(
+                  tooltip: '삭제',
+                  onPressed: _delete,
+                  icon: const Icon(Icons.delete_outline),
+                ),
+              FilledButton.icon(
+                onPressed: _save,
+                icon: const Icon(Icons.save),
+                label: Text(_isNew ? '추가' : (_dirty ? '저장' : '저장됨')),
+              ),
+            ],
+          ),
+        ),
         Expanded(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  _isNew ? '새 선수' : widget.player!.name,
-                  style: theme.textTheme.titleLarge,
-                ),
-                const SizedBox(height: 8),
                 Row(
                   children: [
                     Expanded(
@@ -195,26 +216,6 @@ class _PlayerEditorState extends ConsumerState<PlayerEditor> {
                 ),
               ],
             ),
-          ),
-        ),
-        const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.all(10),
-          child: Row(
-            children: [
-              if (!_isNew)
-                TextButton.icon(
-                  onPressed: _delete,
-                  icon: const Icon(Icons.delete_outline),
-                  label: const Text('삭제'),
-                ),
-              const Spacer(),
-              FilledButton.icon(
-                onPressed: _save,
-                icon: const Icon(Icons.save),
-                label: Text(_isNew ? '추가' : (_dirty ? '저장' : '저장됨')),
-              ),
-            ],
           ),
         ),
       ],

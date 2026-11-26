@@ -200,4 +200,21 @@ void main() {
     );
     expect(list.single.type, ConstraintType.apart);
   });
+
+  testWidgets('선수 명단 입력 중 "나중에 하기"를 눌러도 이름이 저장된다', (tester) async {
+    final db = await pumpApp(tester);
+    await tapAndSettle(tester, find.text('새 모임 만들기'));
+    await tester.enterText(find.byType(TextField).first, 'G');
+    await tapAndSettle(tester, find.text('다음 →'));
+    await tester.enterText(find.byKey(const Key('rosterSingle')), '김철수');
+    await tapAndSettle(tester, find.text('이름 나누기'));
+    await tester.enterText(find.byKey(const Key('rosterSingle')), '이영희');
+    await tapAndSettle(tester, find.text('나중에 하기'));
+    final group = (await io(
+      tester,
+      () => GroupRepository(db).watchGroups().first,
+    )).single;
+    expect(group.playerCount, 2);
+    expect(group.onboardingStep, 1);
+  });
 }
