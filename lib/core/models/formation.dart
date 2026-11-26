@@ -58,17 +58,17 @@ enum MatchFormat {
     return demand;
   }
 
-  /// 반코트 좌표 (0~1, 아래쪽이 자기 골대) — SPEC §7.1.
+  /// 반코트 위 원의 위치 (0~1, 아래쪽이 자기 골대) — SPEC §7.1.
+  ///
+  /// 원이 구장 밖으로 나가지 않도록 화면에서는 (구장 크기 − 원 지름) 범위에 매핑한다.
+  /// 구장이 작아져도(4팀) 원끼리 겹치지 않게 위아래 간격을 넉넉히 둔다.
   ({double x, double y}) coordinateOf(Slot slot) => switch ((this, slot)) {
-    (_, Slot.gk) => (x: 0.50, y: 0.92),
-    (MatchFormat.fiveVsFive, Slot.fixo1) => (x: 0.50, y: 0.70),
-    (MatchFormat.sixVsSix, Slot.fixo1) => (x: 0.32, y: 0.70),
-    (_, Slot.fixo2) => (x: 0.68, y: 0.70),
-    (MatchFormat.fiveVsFive, Slot.alaLeft) => (x: 0.15, y: 0.48),
-    (MatchFormat.sixVsSix, Slot.alaLeft) => (x: 0.15, y: 0.45),
-    (MatchFormat.fiveVsFive, Slot.alaRight) => (x: 0.85, y: 0.48),
-    (MatchFormat.sixVsSix, Slot.alaRight) => (x: 0.85, y: 0.45),
-    (MatchFormat.fiveVsFive, Slot.pivo) => (x: 0.50, y: 0.22),
-    (MatchFormat.sixVsSix, Slot.pivo) => (x: 0.50, y: 0.20),
+    (_, Slot.gk) => (x: 0.50, y: 1.00),
+    (MatchFormat.fiveVsFive, Slot.fixo1) => (x: 0.50, y: 0.66),
+    (MatchFormat.sixVsSix, Slot.fixo1) => (x: 0.25, y: 0.68),
+    (_, Slot.fixo2) => (x: 0.75, y: 0.68),
+    (_, Slot.alaLeft) => (x: 0.04, y: 0.36),
+    (_, Slot.alaRight) => (x: 0.96, y: 0.36),
+    (_, Slot.pivo) => (x: 0.50, y: 0.04),
   };
 }

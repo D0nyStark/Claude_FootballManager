@@ -6,7 +6,7 @@ import '../../data/repositories/device_repository.dart';
 import 'coach_marks.dart';
 
 /// 튜토리얼이 있는 화면 (SPEC F14). 화면마다 처음 들어갈 때 한 번 보여준다.
-enum TutorialScreen { groupList, groupHome, players, deck, teamSetup, result }
+enum TutorialScreen { groupList, groupHome, players, deck, teamSetup, pitch }
 
 /// 테스트에서는 꺼 둔다.
 final tutorialEnabledProvider = Provider<bool>((ref) => true);

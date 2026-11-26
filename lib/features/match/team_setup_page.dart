@@ -7,7 +7,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../../data/session/match_session.dart';
 import '../players/constraints_view.dart';
-import 'lineup_result_page.dart';
+import '../pitch/pitch_page.dart';
 import 'match_session_controller.dart';
 import 'team_colors.dart';
 import '../tutorial/coach_marks.dart';
@@ -64,7 +64,7 @@ class TeamSetupPage extends ConsumerWidget {
                             ? null
                             : () => Navigator.of(context).push(
                                 MaterialPageRoute(
-                                  builder: (_) => LineupResultPage(
+                                  builder: (_) => PitchPage(
                                     group: group,
                                     request: buildBalanceRequest(
                                       session: session,

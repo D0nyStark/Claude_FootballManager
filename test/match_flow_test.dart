@@ -8,6 +8,8 @@ import 'package:material_ui/material_ui.dart';
 
 import 'helpers/app_harness.dart';
 
+import 'package:futsalteammaker/features/pitch/half_court.dart';
+
 const coreNames = ['김철수', '이영희', '박민수', '최지훈'];
 const regularNames = [
   '정다은',
@@ -58,6 +60,13 @@ Future<(AppDatabase, String)> enterGroup(WidgetTester tester) async {
 }
 
 /// 검색창에 이름을 넣어 찾은 뒤 체크 (목록 아래쪽 선수도 고를 수 있게).
+/// 선수가 들어간 포지션 원 수.
+int placedCircles() => find
+    .byType(PositionCircle)
+    .evaluate()
+    .where((e) => (e.widget as PositionCircle).player != null)
+    .length;
+
 Future<void> tapPlayer(WidgetTester tester, String name) async {
   final search = find.widgetWithText(TextField, '선수 검색');
   await tester.enterText(search, name);
@@ -102,14 +111,25 @@ void main() {
     expect(find.textContaining('부족한 팀'), findsNothing);
 
     await tapAndSettle(tester, find.byKey(const Key('makeTeams')));
-    expect(find.byKey(const Key('balanceScore')), findsOneWidget);
-    expect(find.text('🔴 레드'), findsOneWidget);
-    expect(find.text('🔵 블루'), findsOneWidget);
-    expect(find.text('후보'), findsOneWidget); // 7명 팀의 후보 1명
-    expect(find.text('+1 빌려오기'), findsNothing); // 6명 팀은 정원
 
-    await tapAndSettle(tester, find.text('다시 섞기'));
+    // 구장 화면: 배치 전에는 빈 포지션 원만 (2팀 × 6자리)
+    expect(find.textContaining('자동 편성을 눌러'), findsOneWidget);
+    expect(find.byKey(const Key('balanceScore')), findsNothing);
+    expect(placedCircles(), 0);
+    expect(find.byType(PositionCircle), findsNWidgets(12));
+
+    await tapAndSettle(tester, find.byKey(const Key('autoArrange')));
     expect(find.byKey(const Key('balanceScore')), findsOneWidget);
+    expect(find.textContaining('🔴 레드'), findsOneWidget);
+    expect(find.textContaining('🔵 블루'), findsOneWidget);
+    expect(placedCircles(), 12); // 선발 6 + 6
+    expect(find.byType(Chip), findsOneWidget); // 7명 팀의 후보 1명
+    expect(find.text('+1'), findsNothing); // 6명 팀은 정원
+    expect(find.text('🔄'), findsNWidgets(2)); // 팀별 시작 키퍼
+
+    await tapAndSettle(tester, find.byKey(const Key('shuffle')));
+    expect(find.byKey(const Key('balanceScore')), findsOneWidget);
+    expect(placedCircles(), 12);
   });
 
   testWidgets('작성 중인 덱은 나갔다 와도 남아 있다 (형식은 새로 고른 것)', (tester) async {
@@ -143,8 +163,16 @@ void main() {
     expect(find.text('🧤 한상우'), findsWidgets);
 
     await tapAndSettle(tester, find.byKey(const Key('makeTeams')));
-    expect(find.textContaining('🧤 김철수'), findsOneWidget);
-    expect(find.textContaining('🧤 한상우'), findsOneWidget);
+    await tapAndSettle(tester, find.byKey(const Key('autoArrange')));
+    // 고정 키퍼가 각 팀 GK 원에 🧤 표시로 들어간다.
+    expect(find.text('🧤'), findsNWidgets(2));
+    final keepers = [
+      for (final c in tester.widgetList<PositionCircle>(
+        find.byType(PositionCircle),
+      ))
+        if (c.slot == Slot.gk) c.player?.name,
+    ];
+    expect(keepers.toSet(), {'김철수', '한상우'});
   });
 
   testWidgets('당일 조건 추가', (tester) async {
@@ -159,5 +187,28 @@ void main() {
     await tapAndSettle(tester, find.widgetWithText(FilterChip, '이영희'));
     await tapAndSettle(tester, find.widgetWithText(FilledButton, '추가'));
     expect(find.text('김철수, 이영희'), findsOneWidget);
+  });
+
+  testWidgets('17명 · 6vs6 · 3팀: 부족 팀에 "+1" 자리, 4팀까지 한 화면', (tester) async {
+    await enterGroup(tester);
+    await tapAndSettle(tester, find.text('6 vs 6'));
+    await tapAndSettle(tester, find.text('전체 선택'));
+    for (final name in regularNames) {
+      await tapPlayer(tester, name);
+    }
+    for (final guest in ['용병1', '용병2', '용병3', '용병4']) {
+      await tapAndSettle(tester, find.text('게스트'));
+      await tester.enterText(find.byKey(const Key('guestName')), guest);
+      await tapAndSettle(tester, find.text('추가'));
+    }
+    expect(find.text('출전 17명'), findsOneWidget);
+    await tapAndSettle(tester, find.text('다음 →'));
+    await tapAndSettle(tester, find.byTooltip('팀 늘리기'));
+    expect(find.text('17명 → 6 · 6 · 5'), findsOneWidget);
+    await tapAndSettle(tester, find.byKey(const Key('makeTeams')));
+    expect(find.byType(PositionCircle), findsNWidgets(18));
+    await tapAndSettle(tester, find.byKey(const Key('autoArrange')));
+    expect(placedCircles(), 17);
+    expect(find.text('+1'), findsOneWidget);
   });
 }
