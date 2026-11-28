@@ -21,6 +21,39 @@
   <title>풋살 팀메이커</title>
   <meta name="theme-color" content="#1B8A3C">
   <link rel="manifest" href="manifest.json">
+  <!-- 페이퍼로지 웹폰트. 앱 안 글자는 Flutter가 번들한 같은 폰트로 그려서 CDN 없이도 깨지지 않는다. -->
+  <style>
+    @font-face {
+      font-family: 'Paperlogy';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-3Light.woff2') format('woff2');
+      font-weight: 300;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Paperlogy';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-4Regular.woff2') format('woff2');
+      font-weight: 400;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Paperlogy';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-6SemiBold.woff2') format('woff2');
+      font-weight: 600;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: 'Paperlogy';
+      src: url('https://fastly.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-8ExtraBold.woff2') format('woff2');
+      font-weight: 800;
+      font-style: normal;
+    }
+    html, body { background: #ffffff; font-family: 'Paperlogy', sans-serif; font-weight: 400; }
+    h1, h2 { font-weight: 800; }
+    h3, button { font-weight: 600; }
+    p, li, span { font-weight: 400; }
+    small, caption, figcaption, .caption { font-weight: 300; }
+  </style>
+
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

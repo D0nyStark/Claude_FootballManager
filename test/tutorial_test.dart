@@ -87,7 +87,7 @@ void main() {
     await tapAndSettle(tester, find.text('완료'));
 
     // 설정 → 사용법 다시 보기
-    await tapAndSettle(tester, find.text('설정'));
+    await tapAndSettle(tester, find.byTooltip('설정'));
     await tapAndSettle(tester, find.text('사용법 다시 보기'));
     expect(
       await io(tester, () => DeviceRepository(db).get('tutorial.groupHome')),

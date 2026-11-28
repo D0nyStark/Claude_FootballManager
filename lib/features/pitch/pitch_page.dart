@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../common/common_widgets.dart';
+
 import '../../core/balancer/balancer.dart';
 import '../../core/models/models.dart';
 import '../../core/scoring/scoring.dart';
@@ -364,19 +366,35 @@ class _PitchPageState extends ConsumerState<PitchPage>
                     child: Stack(
                       key: _stackKey,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            CoachTarget(
-                              id: 'pitch.deck',
-                              child: _deckPanel(lineup),
-                            ),
-                            const VerticalDivider(width: 1),
-                            Expanded(child: _courts(lineup, balance)),
-                            const VerticalDivider(width: 1),
-                            _rail(),
-                          ],
-                        ),
+                        if (isNarrow(context))
+                          // 세로: 위 출전 덱 띠 / 가운데 구장(위아래로 쌓기) / 아래 버튼 줄.
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              CoachTarget(
+                                id: 'pitch.deck',
+                                child: _deckStrip(lineup),
+                              ),
+                              const Divider(height: 1),
+                              Expanded(child: _courts(lineup, balance)),
+                              const Divider(height: 1),
+                              _rail(),
+                            ],
+                          )
+                        else
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              CoachTarget(
+                                id: 'pitch.deck',
+                                child: _deckPanel(lineup),
+                              ),
+                              const VerticalDivider(width: 1),
+                              Expanded(child: _courts(lineup, balance)),
+                              const VerticalDivider(width: 1),
+                              _rail(),
+                            ],
+                          ),
                         if (_flying)
                           Positioned.fill(
                             child: IgnorePointer(
@@ -497,6 +515,87 @@ class _PitchPageState extends ConsumerState<PitchPage>
     );
   }
 
+  /// 출전 덱 선수 칩 하나 (가로 패널·세로 띠 공통).
+  Widget _deckChip(Player p, Map<String, int> teamOf) {
+    final theme = Theme.of(context);
+    return Opacity(
+      opacity: _flying ? 0 : 1,
+      child: Container(
+        key: _deckKeys.putIfAbsent(p.id, GlobalKey.new),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surfaceContainerHighest,
+          borderRadius: BorderRadius.circular(14),
+          border: teamOf[p.id] == null
+              ? null
+              : Border.all(color: _colors[teamOf[p.id]!], width: 2),
+        ),
+        child: Text(
+          p.isGuest ? '${p.name}*' : p.name,
+          style: theme.textTheme.bodySmall,
+        ),
+      ),
+    );
+  }
+
+  /// 세로: 위쪽 출전 덱 띠 (옆으로 밀기, 배치 후 접힘).
+  Widget _deckStrip(Lineup? lineup) {
+    final theme = Theme.of(context);
+    final players = widget.request.players;
+    if (!_deckOpen) {
+      return InkWell(
+        onTap: () => setState(() => _deckOpen = true),
+        child: SizedBox(
+          height: 32,
+          child: Row(
+            children: [
+              const SizedBox(width: 12),
+              Text(
+                '출전 덱 ${players.length}명',
+                style: theme.textTheme.labelLarge,
+              ),
+              const Icon(Icons.expand_more),
+            ],
+          ),
+        ),
+      );
+    }
+    final teamOf = <String, int>{
+      if (lineup != null)
+        for (var t = 0; t < lineup.teams.length; t++)
+          for (final id in lineup.teams[t].playerIds) id: t,
+    };
+    return SizedBox(
+      height: 44,
+      child: Row(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  for (final p in players)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: _deckChip(p, teamOf),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          if (lineup != null)
+            IconButton(
+              visualDensity: VisualDensity.compact,
+              tooltip: '접기',
+              icon: const Icon(Icons.expand_less),
+              onPressed: () => setState(() => _deckOpen = false),
+            ),
+        ],
+      ),
+    );
+  }
+
   /// 왼쪽 출전 덱 패널 (140dp, 배치 후 접힘).
   Widget _deckPanel(Lineup? lineup) {
     final theme = Theme.of(context);
@@ -593,10 +692,15 @@ class _PitchPageState extends ConsumerState<PitchPage>
   /// 오른쪽 버튼 줄 (72dp).
   Widget _rail() {
     final arranged = _lineup != null;
+    final narrow = isNarrow(context);
     return SizedBox(
-      width: 84,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      width: narrow ? null : 84,
+      height: narrow ? 80 : null,
+      child: Flex(
+        direction: narrow ? Axis.horizontal : Axis.vertical,
+        mainAxisAlignment: narrow
+            ? MainAxisAlignment.spaceEvenly
+            : MainAxisAlignment.center,
         children: [
           CoachTarget(
             id: 'pitch.auto',
@@ -693,9 +797,20 @@ class _PitchPageState extends ConsumerState<PitchPage>
             summaryH -
             (hasBench ? benchH : 0) -
             3 * pad;
-        final maxByWidth = constraints.maxWidth / _teamCount - 2 * pad;
+        final narrow = isNarrow(context);
+        final maxByWidth = narrow
+            ? constraints.maxWidth - 2 * pad
+            : constraints.maxWidth / _teamCount - 2 * pad;
+        // 세로: 두 팀이 한 화면에 들어오는 크기로, 3팀 이상은 위아래로 스크롤.
+        final narrowByHeight =
+            (constraints.maxHeight / math.min(_teamCount, 2)) -
+            summaryH -
+            (hasBench ? benchH : 0) -
+            3 * pad;
         // 원이 48dp보다 작아질 만큼 좁으면 가로 스크롤 (SPEC §8.4).
-        final court = math.max(150.0, math.min(maxByHeight, maxByWidth));
+        final court = narrow
+            ? math.max(180.0, math.min(narrowByHeight, maxByWidth))
+            : math.max(150.0, math.min(maxByHeight, maxByWidth));
         _circleSize = (court * 0.2).clamp(44.0, 56.0);
         final row = Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -717,6 +832,13 @@ class _PitchPageState extends ConsumerState<PitchPage>
               ),
           ],
         );
+        if (narrow) {
+          return SingleChildScrollView(
+            child: Center(
+              child: Column(children: [for (final w in row.children) w]),
+            ),
+          );
+        }
         final needed = (court + 2 * pad) * _teamCount;
         return needed > constraints.maxWidth
             ? SingleChildScrollView(

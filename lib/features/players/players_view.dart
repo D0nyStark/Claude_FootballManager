@@ -40,26 +40,52 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
   @override
   Widget build(BuildContext context) {
     final players = ref.watch(playersProvider(widget.group.id));
+    final narrow = isNarrow(context);
+    final showDetail =
+        narrow && _tab == _Tab.players && (_newPlayer || _selectedId != null);
     return TutorialHost(
       screen: TutorialScreen.players,
       ready: players.hasValue,
       steps: () => TutorialSteps.players(canSeeStats: _canSeeStats),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: 320,
-            // 키보드가 올라오는 등 남는 높이가 적으면 탭·필터를 숨긴다 (가로 화면).
-            // Scaffold 안쪽에서는 키보드 높이가 0으로 전달되므로 실제 높이로 판단한다.
-            child: LayoutBuilder(
-              builder: (context, box) =>
-                  _leftPanel(players, compact: box.maxHeight < _compactHeight),
+      child: narrow
+          // 세로: 목록 ↔ 편집 폼을 한 화면씩. 편집 중 ← 는 목록으로 돌아간다.
+          ? PopScope(
+              canPop: !showDetail,
+              onPopInvokedWithResult: (didPop, _) {
+                if (!didPop) {
+                  setState(() {
+                    _selectedId = null;
+                    _newPlayer = false;
+                  });
+                }
+              },
+              child: showDetail
+                  ? _detail(players.value ?? const [])
+                  : LayoutBuilder(
+                      builder: (context, box) => _leftPanel(
+                        players,
+                        compact: box.maxHeight < _compactHeight,
+                      ),
+                    ),
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  width: 320,
+                  // 키보드가 올라오는 등 남는 높이가 적으면 탭·필터를 숨긴다 (가로 화면).
+                  // Scaffold 안쪽에서는 키보드 높이가 0으로 전달되므로 실제 높이로 판단한다.
+                  child: LayoutBuilder(
+                    builder: (context, box) => _leftPanel(
+                      players,
+                      compact: box.maxHeight < _compactHeight,
+                    ),
+                  ),
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: _detail(players.value ?? const [])),
+              ],
             ),
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(child: _detail(players.value ?? const [])),
-        ],
-      ),
     );
   }
 
@@ -206,7 +232,7 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            color: theme.colorScheme.surfaceContainerHighest,
+            color: Colors.white.withValues(alpha: 0.35),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Text(
               '$title (${players.length})',
@@ -238,7 +264,9 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
               trailing: _canSeeStats
                   ? Text(
                       p.stats.ovr.toStringAsFixed(1),
-                      style: theme.textTheme.titleSmall,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800, // 핵심 숫자
+                      ),
                     )
                   : null,
               onTap: () => setState(() {

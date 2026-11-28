@@ -1,5 +1,7 @@
 import 'package:material_ui/material_ui.dart';
 
+import '../common/common_widgets.dart';
+
 import '../../core/scoring/balance_score.dart';
 
 /// 구장 화면 최상단 고정 헤더: 실시간 밸런스 점수 (SPEC F5).
@@ -35,6 +37,44 @@ class BalanceHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final b = balance;
+    if (b != null && isNarrow(context)) {
+      // 세로: 윗줄 뒤로·점수, 아랫줄 세부 점수·편성안 선택.
+      return Material(
+        color: theme.colorScheme.surfaceContainerHigh,
+        child: SizedBox(
+          height: 88,
+          child: Column(
+            children: [
+              SizedBox(
+                height: 48,
+                child: Row(
+                  children: [
+                    IconButton(
+                      tooltip: '뒤로',
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: onBack,
+                    ),
+                    _score(theme, b),
+                  ],
+                ),
+              ),
+              SizedBox(
+                height: 40,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 16),
+                  child: Row(
+                    children: [
+                      Expanded(child: _breakdown(theme, b)),
+                      if (candidateCount > 1) _candidates(),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     return Material(
       color: theme.colorScheme.surfaceContainerHigh,
       child: SizedBox(
@@ -59,30 +99,30 @@ class BalanceHeader extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(child: _breakdown(theme, b)),
             ],
-            if (candidateCount > 1)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: SegmentedButton<int>(
-                  showSelectedIcon: false,
-                  style: SegmentedButton.styleFrom(
-                    visualDensity: VisualDensity.compact,
-                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  ),
-                  segments: [
-                    for (var i = 0; i < candidateCount; i++)
-                      ButtonSegment(value: i, label: Text('${i + 1}')),
-                  ],
-                  selected: {selected},
-                  onSelectionChanged: onSelect == null
-                      ? null
-                      : (s) => onSelect!(s.first),
-                ),
-              ),
+            if (candidateCount > 1) _candidates(),
           ],
         ),
       ),
     );
   }
+
+  /// 편성안 1·2·3 선택.
+  Widget _candidates() => Padding(
+    padding: const EdgeInsets.only(right: 8),
+    child: SegmentedButton<int>(
+      showSelectedIcon: false,
+      style: SegmentedButton.styleFrom(
+        visualDensity: VisualDensity.compact,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      segments: [
+        for (var i = 0; i < candidateCount; i++)
+          ButtonSegment(value: i, label: Text('${i + 1}')),
+      ],
+      selected: {selected},
+      onSelectionChanged: onSelect == null ? null : (s) => onSelect!(s.first),
+    ),
+  );
 
   Widget _score(ThemeData theme, BalanceBreakdown b) {
     final color = gradeColor(b.grade);

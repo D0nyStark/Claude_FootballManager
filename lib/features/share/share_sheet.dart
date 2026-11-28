@@ -2,6 +2,8 @@ import 'dart:typed_data';
 
 import 'package:material_ui/material_ui.dart';
 
+import '../common/common_widgets.dart';
+
 import 'share_service.dart';
 
 /// 확정 후 공유 창 (SPEC F8.1~F8.3): 텍스트 복사·공유, 구장 이미지 공유.
@@ -98,106 +100,103 @@ class _ShareSheetState extends State<_ShareSheet> {
     final theme = Theme.of(context);
     final base = widget.text(_withStats);
     final preview = _withLink && _link != null ? '$base\n\n$_link' : base;
+    final Widget left = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(widget.title, style: theme.textTheme.titleMedium),
+        const SizedBox(height: 8),
+        Container(
+          key: const Key('sharePreview'),
+          constraints: const BoxConstraints(maxHeight: 110),
+          width: double.infinity,
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: SingleChildScrollView(
+            child: Text(preview, style: theme.textTheme.bodySmall),
+          ),
+        ),
+        if (widget.canIncludeStats)
+          SwitchListTile(
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: const Text('팀별 OVR 포함'),
+            value: _withStats,
+            onChanged: (v) => setState(() => _withStats = v),
+          ),
+        if (widget.updateLink != null)
+          SwitchListTile(
+            key: const Key('withUpdateLink'),
+            dense: true,
+            contentPadding: EdgeInsets.zero,
+            title: const Text('모임 업데이트 링크 함께 보내기'),
+            subtitle: const Text('받은 사람의 선수 명단·이력도 함께 맞춰져요'),
+            value: _withLink,
+            onChanged: _busy ? null : _toggleLink,
+          ),
+      ],
+    );
+    final Widget right = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton.icon(
+          key: const Key('copyText'),
+          onPressed: _busy
+              ? null
+              : () => _do(
+                  () => widget.service.copyText(preview),
+                  '복사했어요. 카카오톡에 붙여넣으세요.',
+                ),
+          icon: const Icon(Icons.copy),
+          label: const Text('텍스트 복사'),
+        ),
+        const SizedBox(height: 8),
+        OutlinedButton.icon(
+          key: const Key('shareText'),
+          onPressed: _busy
+              ? null
+              : () => _do(() => widget.service.shareText(preview), '공유했어요.'),
+          icon: const Icon(Icons.share),
+          label: const Text('텍스트 공유'),
+        ),
+        if (widget.image != null) ...[
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            key: const Key('shareImage'),
+            onPressed: _busy
+                ? null
+                : () => _do(() async {
+                    final png = await widget.image!();
+                    if (png != null) {
+                      await widget.service.shareImage(png, text: preview);
+                    }
+                  }, '공유했어요.'),
+            icon: const Icon(Icons.image),
+            label: const Text('이미지 공유'),
+          ),
+        ],
+      ],
+    );
     return SafeArea(
       child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(widget.title, style: theme.textTheme.titleMedium),
-                  const SizedBox(height: 8),
-                  Container(
-                    key: const Key('sharePreview'),
-                    constraints: const BoxConstraints(maxHeight: 110),
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: SingleChildScrollView(
-                      child: Text(preview, style: theme.textTheme.bodySmall),
-                    ),
-                  ),
-                  if (widget.canIncludeStats)
-                    SwitchListTile(
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('팀별 OVR 포함'),
-                      value: _withStats,
-                      onChanged: (v) => setState(() => _withStats = v),
-                    ),
-                  if (widget.updateLink != null)
-                    SwitchListTile(
-                      key: const Key('withUpdateLink'),
-                      dense: true,
-                      contentPadding: EdgeInsets.zero,
-                      title: const Text('모임 업데이트 링크 함께 보내기'),
-                      subtitle: const Text('받은 사람의 선수 명단·이력도 함께 맞춰져요'),
-                      value: _withLink,
-                      onChanged: _busy ? null : _toggleLink,
-                    ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 16),
-            SizedBox(
-              width: 170,
-              child: Column(
+        // 세로(좁은 화면): 미리보기·옵션 위, 버튼 아래. 가로: 왼쪽·오른쪽 2단.
+        child: isNarrow(context)
+            ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [left, const SizedBox(height: 12), right],
+              )
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  FilledButton.icon(
-                    key: const Key('copyText'),
-                    onPressed: _busy
-                        ? null
-                        : () => _do(
-                            () => widget.service.copyText(preview),
-                            '복사했어요. 카카오톡에 붙여넣으세요.',
-                          ),
-                    icon: const Icon(Icons.copy),
-                    label: const Text('텍스트 복사'),
-                  ),
-                  const SizedBox(height: 8),
-                  OutlinedButton.icon(
-                    key: const Key('shareText'),
-                    onPressed: _busy
-                        ? null
-                        : () => _do(
-                            () => widget.service.shareText(preview),
-                            '공유했어요.',
-                          ),
-                    icon: const Icon(Icons.share),
-                    label: const Text('텍스트 공유'),
-                  ),
-                  if (widget.image != null) ...[
-                    const SizedBox(height: 8),
-                    OutlinedButton.icon(
-                      key: const Key('shareImage'),
-                      onPressed: _busy
-                          ? null
-                          : () => _do(() async {
-                              final png = await widget.image!();
-                              if (png != null) {
-                                await widget.service.shareImage(
-                                  png,
-                                  text: preview,
-                                );
-                              }
-                            }, '공유했어요.'),
-                      icon: const Icon(Icons.image),
-                      label: const Text('이미지 공유'),
-                    ),
-                  ],
+                  Expanded(child: left),
+                  const SizedBox(width: 16),
+                  SizedBox(width: 170, child: right),
                 ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }

@@ -17,8 +17,9 @@ Future<void> main() async {
   final webInvite = kIsWeb ? takeInitialInvite() : null;
   if (kIsWeb) usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
-  // SPEC §8: 앱 전체 가로 모드 고정.
+  // v1.7 시안: 세로·가로 모두 지원 (거꾸로 든 세로만 제외).
   await SystemChrome.setPreferredOrientations(const [
+    DeviceOrientation.portraitUp,
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);

@@ -24,7 +24,7 @@ abstract final class TutorialSteps {
     CoachStep(
       'home.format',
       '오늘 매치 시작',
-      '5 vs 5 또는 6 vs 6을 고르면, 오늘 나온 사람을 출전 덱에 올리는 화면으로 넘어가요.',
+      '풋살을 누르면 오늘 나온 사람을 출전 덱에 올리는 화면으로 넘어가요. 팀 인원(4 vs 4 ~ 7 vs 7)은 그다음 팀 설정에서 골라요. 축구는 준비 중이에요.',
     ),
     CoachStep(
       'home.onboarding',
@@ -33,12 +33,12 @@ abstract final class TutorialSteps {
     ),
     CoachStep(
       'shell.players',
-      '선수',
+      '선수 (오른쪽 위)',
       '선수를 등록하고 능력치를 고쳐요. 항상 같은 팀/다른 팀으로 나눌 선수도 여기서 정해요.',
     ),
     CoachStep(
       'shell.settings',
-      '설정',
+      '설정 (오른쪽 위)',
       '모임 이름·아이콘·기본 경기 방식을 바꾸고, 사용법을 다시 볼 수 있어요.',
     ),
     CoachStep(
@@ -53,7 +53,11 @@ abstract final class TutorialSteps {
       '서버가 없어서 자동으로 맞춰지지 않아요. 선수나 능력치를 바꿨다면 이 버튼으로 변경 링크를 '
           '단톡방에 보내 주세요. 받은 사람이 누르면 반영돼요.',
     ),
-    CoachStep('shell.groups', '모임 목록', '다른 모임으로 이동해요.'),
+    CoachStep(
+      'shell.groups',
+      '홈',
+      '첫 화면(모임 목록)으로 가요. 다른 모임으로 이동하거나 새 모임을 만들어요.',
+    ),
   ];
 
   static List<CoachStep> players({required bool canSeeStats}) => [
@@ -103,6 +107,11 @@ abstract final class TutorialSteps {
   ];
 
   static const teamSetup = [
+    CoachStep(
+      'setup.format',
+      '팀 인원',
+      '−/+ 로 한 팀 인원을 4 vs 4부터 7 vs 7까지 골라요. 기본값은 모임 설정의 "풋살 기본 인원"이에요.',
+    ),
     CoachStep(
       'setup.teamCount',
       '팀 수',

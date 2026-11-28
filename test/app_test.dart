@@ -9,7 +9,7 @@ import 'helpers/app_harness.dart';
 void main() {
   testWidgets('첫 화면: 앱 이름 · 새 모임 만들기 · 초대 링크로 참여', (tester) async {
     await pumpApp(tester);
-    expect(find.text('풋살 팀메이커'), findsOneWidget);
+    expect(find.text('Football Team Maker'), findsOneWidget);
     expect(find.text('새 모임 만들기'), findsOneWidget);
     expect(find.text('초대 링크로 참여'), findsOneWidget);
   });
@@ -20,7 +20,7 @@ void main() {
 
     // ① 모임 정보
     await tester.enterText(find.byType(TextField).first, '수요풋살');
-    await tapAndSettle(tester, find.text('6 vs 6'));
+    await setFormat(tester, 6);
     await tapAndSettle(tester, find.text('다음 →'));
 
     // ② 선수 명단
@@ -44,7 +44,7 @@ void main() {
     await tapAndSettle(tester, find.text('완료'));
 
     expect(find.text('⚽ 수요풋살'), findsOneWidget);
-    expect(find.text('오늘 매치는?'), findsOneWidget);
+    expect(find.text("Today's Match"), findsOneWidget);
     expect(find.textContaining('설정 마무리하기'), findsNothing);
 
     final group = (await io(
@@ -105,7 +105,7 @@ void main() {
     await settle(tester);
 
     await tapAndSettle(tester, find.text('⚽ 수요풋살'));
-    await tapAndSettle(tester, find.text('선수'));
+    await tapAndSettle(tester, find.byTooltip('선수'));
     expect(find.text('⭐ 주멤버 (0)'), findsOneWidget);
     expect(find.text('👤 일반멤버 (1)'), findsOneWidget);
     expect(find.text('간단'), findsOneWidget);
@@ -165,7 +165,7 @@ void main() {
     await settle(tester);
 
     await tapAndSettle(tester, find.text('⚽ 초대받은 모임'));
-    await tapAndSettle(tester, find.text('선수'));
+    await tapAndSettle(tester, find.byTooltip('선수'));
     expect(find.text('3.0'), findsNothing); // 목록 OVR
     await tapAndSettle(tester, find.text('김철수'));
     expect(find.text('능력치'), findsNothing);
@@ -185,7 +185,7 @@ void main() {
     await settle(tester);
 
     await tapAndSettle(tester, find.text('⚽ 수요풋살'));
-    await tapAndSettle(tester, find.text('선수'));
+    await tapAndSettle(tester, find.byTooltip('선수'));
     await tapAndSettle(tester, find.text('같은 팀/다른 팀'));
     await tapAndSettle(tester, find.text('제약 추가'));
     await tapAndSettle(tester, find.text('항상 다른 팀'));

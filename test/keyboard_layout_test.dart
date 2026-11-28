@@ -80,7 +80,7 @@ void main() {
     );
     await settle(tester);
     await tapAndSettle(tester, find.text('⚽ G'));
-    await tapAndSettle(tester, find.text('선수'));
+    await tapAndSettle(tester, find.byTooltip('선수'));
     await tapAndSettle(tester, find.text('가'));
 
     showKeyboard(tester);

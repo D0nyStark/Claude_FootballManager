@@ -35,7 +35,7 @@ Future<void> openConstraintDialog(WidgetTester tester) async {
   await io(tester, () => PlayerRepository(db, 'x').addPlayersByName(id, names));
   await settle(tester);
   await tapAndSettle(tester, find.text('⚽ G'));
-  await tapAndSettle(tester, find.text('선수'));
+  await tapAndSettle(tester, find.byTooltip('선수'));
   await tapAndSettle(tester, find.text('같은 팀/다른 팀'));
   await tapAndSettle(tester, find.text('제약 추가'));
 }

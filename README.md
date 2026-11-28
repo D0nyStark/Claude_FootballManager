@@ -4,7 +4,7 @@
 기획 문서는 [SPEC.md](SPEC.md)를 참고하세요.
 
 - 패키지: `com.mug.futsalteammaker`
-- Flutter 3.50 / Dart 3.14, Android 기준, 가로 모드 고정
+- Flutter 3.50 / Dart 3.14, Android 기준, 세로·가로 모두 지원 (1.3.0부터, 그 전에는 가로 고정)
 
 ## 구조
 
@@ -26,7 +26,7 @@ test/core/         # 엔진·점수 단위 테스트 (SPEC §6.8 품질 목표 �
 2. APK를 GitHub Releases에 올린다 (안내 페이지의 [앱 설치]가 `releases/latest`로 연결됨).
 3. 폰에서 APK를 받아 설치 → "출처를 알 수 없는 앱 설치" 허용이 필요할 수 있다.
 
-- 지원: Android 7.0(API 24) 이상, 가로 모드 전용
+- 지원: Android 7.0(API 24) 이상, 세로·가로 모두 지원
 - 데모 빌드는 **디버그 키로 서명**되어 있다. 스토어 출시 전에는 별도 서명 키를 만들어 `android/key.properties`로 연결해야 한다 (키 파일은 저장소에 올리지 않는다).
 - 앱 아이콘: `python3 tool/make_icon.py`로 다시 만들 수 있다.
 
@@ -37,9 +37,14 @@ test/core/         # 엔진·점수 단위 테스트 (SPEC §6.8 품질 목표 �
 ```
 
 - GitHub Pages(아래)를 켜면 `https://d0nystark.github.io/Claude_FootballManager/app/`에서 열린다.
-- 아이폰 사파리에서 열고 공유 버튼 → **홈 화면에 추가**. 가로로 돌려서 쓴다.
+- 아이폰 사파리에서 열고 공유 버튼 → **홈 화면에 추가**. 세로·가로 모두 쓸 수 있다.
 - 앱 코드를 고치면 `tool/build_web.sh`를 다시 실행해 `docs/app/`을 함께 커밋한다.
 - `web/sqlite3.wasm`, `web/drift_worker.js`는 drift/sqlite3 패키지 버전에 맞춘 파일이다 (sqlite3 3.9.2, drift 2.35.4). 패키지를 올리면 같은 버전의 릴리스 파일로 바꾼다.
+
+## 디자인 자산
+
+- `assets/fonts/Paperlogy-*.ttf` — 페이퍼로지(SIL OFL 1.1). 라이선스 원문은 `assets/fonts/OFL.txt`. 웹 폰트(woff2)를 앱용 ttf로 형식만 바꿨다.
+- `assets/home_bg.jpg` — 홈 배경 사진. ⚠️ 지금 파일은 **pngtree 워터마크가 있는 시안용 이미지**라 스토어 출시 전에 라이선스가 있는 사진으로 바꿔야 한다(파일만 교체하면 됨).
 
 ## 초대 링크 안내 페이지
 
@@ -72,4 +77,5 @@ flutter build apk      # 데모 배포용 APK
 | M6.5 초대 링크 (MUG2 짧은 형식, 운영진/멤버 초대, 변경 공유, 안내 페이지, 클립보드 감지) | ✅ |
 | M7 데모 빌드 (앱 아이콘, 릴리스 APK: arm64 21.7MB / 범용 62MB) | ✅ |
 | 아이폰용 웹앱 (PWA, GitHub Pages `/app/`, 세로 안내, 웹 초대 링크) | ✅ |
+| UI 개편 1.3.0 (상단 아이콘 이동, 유리 디자인·포인트 `#3B6A41`, 페이퍼로지, 세로 지원, 풋살/축구(준비 중), 팀 인원 4~7) | ✅ |
 | 실기기 시범 사용 · 피드백 반영 | ⏳ |

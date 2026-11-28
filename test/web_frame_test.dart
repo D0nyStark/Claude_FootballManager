@@ -10,9 +10,9 @@ void main() {
     ),
   );
 
-  testWidgets('웹: 세로로 들면 가로로 돌려 달라는 안내 (아래 화면은 유지)', (tester) async {
+  testWidgets('웹: 세로도 지원 — 가로로 돌려 달라는 안내 없음', (tester) async {
     await tester.pumpWidget(app(const Size(390, 844)));
-    expect(find.text('폰을 가로로 돌려 주세요'), findsOneWidget);
+    expect(find.text('폰을 가로로 돌려 주세요'), findsNothing);
     expect(find.text('본 화면', skipOffstage: false), findsOneWidget);
     await tester.pump(const Duration(seconds: 16));
   });

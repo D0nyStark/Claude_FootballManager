@@ -82,10 +82,11 @@ class _DeckPageState extends ConsumerState<DeckPage> {
       steps: () => TutorialSteps.deck,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('출전 덱 · ${widget.format.label}'),
+          // 세로에서는 검색칸에 자리를 내주려고 제목을 줄인다.
+          title: Text(isNarrow(context) ? '출전 덱 · 풋살' : '출전 덱 · 풋살'),
           actions: [
             SizedBox(
-              width: 220,
+              width: isNarrow(context) ? 120 : 220,
               child: TextField(
                 decoration: const InputDecoration(
                   prefixIcon: Icon(Icons.search),
@@ -122,6 +123,40 @@ class _DeckPageState extends ConsumerState<DeckPage> {
       for (final p in registered)
         if (p.memberType == MemberType.core) p.id,
     ];
+    final coreColumn = _column(
+      c,
+      title: '⭐ 주멤버',
+      players: split.core,
+      action: allCoreIds.isEmpty
+          ? null
+          : CoachTarget(
+              id: 'deck.selectAll',
+              child: TextButton(
+                onPressed: () => c.toggleAll(allCoreIds),
+                child: Text(allCoreIds.every(c.inDeck) ? '전체 해제' : '전체 선택'),
+              ),
+            ),
+    );
+    if (isNarrow(context)) {
+      // 세로: 주멤버 / 일반멤버 목록을 위아래로, 출전 요약·버튼은 아래쪽 띠.
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(child: coreColumn),
+          Expanded(
+            child: CoachTarget(
+              id: 'deck.regular',
+              child: _column(c, title: '👤 일반멤버', players: split.regular),
+            ),
+          ),
+          const Divider(height: 1),
+          CoachTarget(
+            id: 'deck.panel',
+            child: SizedBox(height: 132, child: _deckPanel(c, registered)),
+          ),
+        ],
+      );
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

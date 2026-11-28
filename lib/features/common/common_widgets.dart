@@ -2,8 +2,12 @@ import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
 
+import '../../core/models/formation.dart';
 import '../../core/models/player_stats.dart';
 import '../../core/models/position.dart';
+
+/// 폭이 좁으면(세로로 든 폰, 600dp 미만) 세로 배치를 쓴다.
+bool isNarrow(BuildContext context) => MediaQuery.sizeOf(context).width < 600;
 
 /// 포지션 색 (SPEC §4.3): 픽소 파랑 · 아라 초록 · 피보 빨강.
 Color positionColor(Position p) => switch (p) {
@@ -297,3 +301,54 @@ Future<bool> confirmDialog(
       ),
     ) ??
     false;
+
+/// 팀 인원(경기 형식) 선택: [−] 5 vs 5 [+] — 4vs4~7vs7을 버튼 4개 대신 한 줄로.
+class FormatStepper extends StatelessWidget {
+  const FormatStepper({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final MatchFormat value;
+  final ValueChanged<MatchFormat>? onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    const all = MatchFormat.values; // 인원 순서 (4 → 7)
+    final i = all.indexOf(value);
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton.outlined(
+          key: const Key('formatDown'),
+          tooltip: '인원 줄이기',
+          onPressed: onChanged == null || i == 0
+              ? null
+              : () => onChanged!(all[i - 1]),
+          icon: const Icon(Icons.remove),
+        ),
+        SizedBox(
+          width: 92,
+          child: Text(
+            value.label,
+            key: const Key('formatValue'),
+            textAlign: TextAlign.center,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        IconButton.outlined(
+          key: const Key('formatUp'),
+          tooltip: '인원 늘리기',
+          onPressed: onChanged == null || i == all.length - 1
+              ? null
+              : () => onChanged!(all[i + 1]),
+          icon: const Icon(Icons.add),
+        ),
+      ],
+    );
+  }
+}

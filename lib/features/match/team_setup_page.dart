@@ -6,6 +6,7 @@ import '../../core/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../../data/session/match_session.dart';
+import '../common/common_widgets.dart';
 import '../players/constraints_view.dart';
 import '../pitch/pitch_page.dart';
 import 'match_session_controller.dart';
@@ -46,12 +47,17 @@ class TeamSetupPage extends ConsumerWidget {
           steps: () => TutorialSteps.teamSetup,
           child: Scaffold(
             appBar: AppBar(title: Text('팀 설정 · 출전 ${deck.length}명')),
-            body: Row(
+            // 세로: 팀 옵션 위, 당일 조건 아래.
+            body: Flex(
+              direction: isNarrow(context) ? Axis.vertical : Axis.horizontal,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Expanded(child: _teamOptions(context, session, deck)),
-                const VerticalDivider(width: 1),
+                Expanded(flex: 3, child: _teamOptions(context, session, deck)),
+                isNarrow(context)
+                    ? const Divider(height: 1)
+                    : const VerticalDivider(width: 1),
                 Expanded(
+                  flex: isNarrow(context) ? 2 : 3,
                   child: _constraints(context, session, deck, groupConstraints),
                 ),
               ],
@@ -117,21 +123,21 @@ class TeamSetupPage extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              SizedBox(
-                width: 64,
-                child: Text('형식', style: theme.textTheme.labelLarge),
-              ),
-              SegmentedButton<MatchFormat>(
-                segments: [
-                  for (final f in MatchFormat.values)
-                    ButtonSegment(value: f, label: Text(f.label)),
-                ],
-                selected: {session.format},
-                onSelectionChanged: (s) => controller.setFormat(s.first),
-              ),
-            ],
+          // 팀 인원 4~7: 버튼 4개 대신 [−] 5 vs 5 [+] 한 줄 (팀 수와 같은 방식).
+          CoachTarget(
+            id: 'setup.format',
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 64,
+                  child: Text('인원', style: theme.textTheme.labelLarge),
+                ),
+                FormatStepper(
+                  value: session.format,
+                  onChanged: controller.setFormat,
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 12),
           CoachTarget(

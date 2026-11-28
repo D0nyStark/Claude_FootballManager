@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../common/glass.dart';
+
 import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../common/common_widgets.dart';
@@ -75,7 +77,10 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
       steps: () => TutorialSteps.groupList,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('풋살 팀메이커'),
+          title: const Text(
+            'Football Team Maker',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
           actions: [
             IconButton(
               key: const Key('importBackupList'),
@@ -85,12 +90,20 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
             ),
             CoachTarget(
               id: 'groups.join',
-              child: TextButton.icon(
-                key: const Key('joinByLink'),
-                onPressed: () => askAndJoin(context, ref),
-                icon: const Icon(Icons.link),
-                label: const Text('초대 링크로 참여'),
-              ),
+              // 세로(좁은 화면)는 아이콘만.
+              child: isNarrow(context)
+                  ? IconButton(
+                      key: const Key('joinByLink'),
+                      tooltip: '초대 링크로 참여',
+                      onPressed: () => askAndJoin(context, ref),
+                      icon: const Icon(Icons.link),
+                    )
+                  : TextButton.icon(
+                      key: const Key('joinByLink'),
+                      onPressed: () => askAndJoin(context, ref),
+                      icon: const Icon(Icons.link),
+                      label: const Text('초대 링크로 참여'),
+                    ),
             ),
             const SizedBox(width: 8),
           ],
@@ -216,31 +229,38 @@ class _GroupCard extends StatelessWidget {
     return SizedBox(
       width: 210,
       height: 140,
-      child: Card(
-        clipBehavior: Clip.antiAlias,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(color: color.withValues(alpha: 0.6), width: 1.5),
-        ),
-        child: InkWell(
-          onTap: onTap,
-          onLongPress: onLongPress,
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+      child: Glass(
+        radius: 20,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            onLongPress: onLongPress,
+            borderRadius: BorderRadius.circular(20),
+            child: Row(
               children: [
-                Text(
-                  '${group.icon} ${group.name}',
-                  style: theme.textTheme.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const Spacer(),
-                Text('선수 ${group.playerCount}명'),
-                Text(
-                  '${group.role.label} · ${used.month}/${used.day}',
-                  style: theme.textTheme.bodySmall,
+                Container(width: 6, color: color.withValues(alpha: 0.85)),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${group.icon} ${group.name}',
+                          style: theme.textTheme.titleMedium,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const Spacer(),
+                        Text('선수 ${group.playerCount}명'),
+                        Text(
+                          '${group.role.label} · ${used.month}/${used.day}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -262,18 +282,22 @@ class _CreateGroupCard extends StatelessWidget {
     return SizedBox(
       width: 210,
       height: 140,
-      child: Card.outlined(
-        clipBehavior: Clip.antiAlias,
-        child: InkWell(
-          onTap: onTap,
-          child: Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.add, size: 40, color: theme.colorScheme.primary),
-                const SizedBox(height: 8),
-                const Text('새 모임 만들기'),
-              ],
+      child: Glass(
+        radius: 20,
+        child: Material(
+          type: MaterialType.transparency,
+          child: InkWell(
+            onTap: onTap,
+            borderRadius: BorderRadius.circular(20),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, size: 40, color: theme.colorScheme.primary),
+                  const SizedBox(height: 8),
+                  const Text('새 모임 만들기'),
+                ],
+              ),
             ),
           ),
         ),

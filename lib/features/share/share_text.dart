@@ -24,7 +24,7 @@ String buildShareText({
   List<double>? teamOvr,
 }) {
   const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
-  final format = lineup.format == MatchFormat.fiveVsFive ? '5vs5' : '6vs6';
+  final format = lineup.format.short;
   final count = lineup.playerIds.length;
   final header =
       StringBuffer(

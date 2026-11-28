@@ -39,6 +39,7 @@ void main() {
     final (message, _) = await inviteFromA(tester);
     expect(message, contains('[수요풋살] 모임에 초대합니다! (멤버)'));
     expect(message, contains('${AppConfig.inviteBaseUrl}#MUG2:'));
+    await waitFor(tester, find.text('변경 공유'));
     expect(find.text('변경 공유'), findsOneWidget); // 공유 직후 → 변경 없음
   });
 
@@ -67,7 +68,7 @@ void main() {
     expect(kim.stats, PlayerStats.uniform(5));
 
     await tapAndSettle(tester, find.text('⚽ 수요풋살'));
-    await tapAndSettle(tester, find.text('선수'));
+    await tapAndSettle(tester, find.byTooltip('선수'));
     expect(find.text('5.0'), findsNothing);
   });
 
@@ -136,9 +137,11 @@ void main() {
     );
     await settle(tester);
     await tapAndSettle(tester, find.text('⚽ G'));
+    await waitFor(tester, find.text('변경 공유 (1건)'));
     expect(find.text('변경 공유 (1건)'), findsOneWidget);
     await tapAndSettle(tester, find.byKey(const Key('shareChanges')));
     expect(fakeShare.texts.single, contains('모임 변경 사항'));
+    await waitFor(tester, find.text('변경 공유'));
     expect(find.text('변경 공유'), findsOneWidget);
   });
 }

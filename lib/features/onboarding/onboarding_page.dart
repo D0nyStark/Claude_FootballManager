@@ -184,103 +184,192 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
     final theme = Theme.of(context);
     // 가로 화면에서 키보드가 올라오면 남는 높이가 아주 적다 → 버튼을 제목줄로 올리고 제목줄도 낮춘다.
     final keyboard = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final narrow = isNarrow(context);
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: keyboard ? 44 : null,
         title: Text(_groupId == null ? '새 모임 만들기' : '모임 설정 마무리'),
-        actions: [
-          TextButton(
-            onPressed: _busy ? null : _later,
-            child: const Text('나중에 하기'),
-          ),
-          if (_step > 0)
-            TextButton(
-              onPressed: _busy ? null : () => _next(save: false),
-              child: const Text('건너뛰기'),
-            ),
-          const SizedBox(width: 4),
-          FilledButton(
-            onPressed: _busy ? null : () => _next(save: true),
-            child: Text(_step >= 3 ? '완료' : '다음 →'),
-          ),
-          const SizedBox(width: 12),
-        ],
+        actions: narrow
+            ? null
+            : [..._actionButtons(), const SizedBox(width: 12)],
       ),
-      body: Row(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            width: 130,
-            child: ListView(
-              padding: const EdgeInsets.symmetric(vertical: 12),
+      // 세로: 버튼은 아래쪽 줄(키보드 위)에 둔다.
+      bottomNavigationBar: narrow
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 4, 12, 8),
+                child: Row(
+                  children: [
+                    ..._actionButtons().take(_step > 0 ? 2 : 1),
+                    const Spacer(),
+                    _actionButtons().last,
+                  ],
+                ),
+              ),
+            )
+          : null,
+      body: narrow
+          ? _narrowBody(theme, keyboard)
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                for (var i = 0; i < stepTitles.length; i++)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 8,
-                    ),
-                    child: Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 12,
-                          backgroundColor: i <= _step
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.surfaceContainerHighest,
-                          child: i < _step
-                              ? Icon(
-                                  Icons.check,
-                                  size: 14,
-                                  color: theme.colorScheme.onPrimary,
-                                )
-                              : Text(
-                                  '${i + 1}',
+                SizedBox(
+                  width: 130,
+                  child: ListView(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    children: [
+                      for (var i = 0; i < stepTitles.length; i++)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 12,
+                                backgroundColor: i <= _step
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.surfaceContainerHighest,
+                                child: i < _step
+                                    ? Icon(
+                                        Icons.check,
+                                        size: 14,
+                                        color: theme.colorScheme.onPrimary,
+                                      )
+                                    : Text(
+                                        '${i + 1}',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: i == _step
+                                              ? theme.colorScheme.onPrimary
+                                              : theme
+                                                    .colorScheme
+                                                    .onSurfaceVariant,
+                                        ),
+                                      ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  stepTitles[i],
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontWeight: i == _step
+                                        ? FontWeight.w700
+                                        : FontWeight.normal,
                                     color: i == _step
-                                        ? theme.colorScheme.onPrimary
-                                        : theme.colorScheme.onSurfaceVariant,
+                                        ? theme.colorScheme.primary
+                                        : null,
                                   ),
                                 ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            stepTitles[i],
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontWeight: i == _step
-                                  ? FontWeight.w700
-                                  : FontWeight.normal,
-                              color: i == _step
-                                  ? theme.colorScheme.primary
-                                  : null,
-                            ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
+                    ],
                   ),
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.fromLTRB(24, keyboard ? 4 : 16, 24, 8),
+                    child: switch (_step) {
+                      0 => _infoStep(theme),
+                      1 => _rosterStep(theme, keyboard: keyboard),
+                      2 => _specStep(theme),
+                      _ => _inviteStep(theme),
+                    },
+                  ),
+                ),
               ],
             ),
-          ),
-          const VerticalDivider(width: 1),
-          Expanded(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(24, keyboard ? 4 : 16, 24, 8),
-              child: switch (_step) {
-                0 => _infoStep(theme),
-                1 => _rosterStep(theme, keyboard: keyboard),
-                2 => _specStep(theme),
-                _ => _inviteStep(theme),
-              },
-            ),
-          ),
-        ],
-      ),
     );
   }
+
+  List<Widget> _actionButtons() => [
+    TextButton(onPressed: _busy ? null : _later, child: const Text('나중에 하기')),
+    if (_step > 0)
+      TextButton(
+        onPressed: _busy ? null : () => _next(save: false),
+        child: const Text('건너뛰기'),
+      ),
+    FilledButton(
+      onPressed: _busy ? null : () => _next(save: true),
+      child: Text(_step >= 3 ? '완료' : '다음 →'),
+    ),
+  ];
+
+  /// 세로: 단계 표시를 위쪽 가로줄로.
+  Widget _narrowBody(ThemeData theme, bool keyboard) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      if (!keyboard)
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+          child: Row(
+            children: [
+              for (var i = 0; i < stepTitles.length; i++) ...[
+                if (i > 0)
+                  Expanded(
+                    child: Divider(
+                      color: i <= _step
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant,
+                    ),
+                  ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircleAvatar(
+                      radius: 12,
+                      backgroundColor: i <= _step
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.surfaceContainerHighest,
+                      child: i < _step
+                          ? Icon(
+                              Icons.check,
+                              size: 14,
+                              color: theme.colorScheme.onPrimary,
+                            )
+                          : Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: i == _step
+                                    ? theme.colorScheme.onPrimary
+                                    : theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      stepTitles[i],
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: i == _step ? theme.colorScheme.primary : null,
+                        fontWeight: i == _step ? FontWeight.w600 : null,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        ),
+      Expanded(
+        child: Padding(
+          padding: EdgeInsets.fromLTRB(16, keyboard ? 4 : 0, 16, 8),
+          child: switch (_step) {
+            0 => _infoStep(theme),
+            1 => _rosterStep(theme, keyboard: keyboard),
+            2 => _specStep(theme),
+            _ => _inviteStep(theme),
+          },
+        ),
+      ),
+    ],
+  );
 
   Widget _infoStep(ThemeData theme) => SingleChildScrollView(
     child: Column(
@@ -330,15 +419,11 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
           ],
         ),
         const SizedBox(height: 16),
-        Text('기본 경기 방식', style: theme.textTheme.labelLarge),
+        Text('풋살 기본 인원', style: theme.textTheme.labelLarge),
         const SizedBox(height: 6),
-        SegmentedButton<MatchFormat>(
-          segments: [
-            for (final f in MatchFormat.values)
-              ButtonSegment(value: f, label: Text(f.label)),
-          ],
-          selected: {_format},
-          onSelectionChanged: (s) => setState(() => _format = s.first),
+        FormatStepper(
+          value: _format,
+          onChanged: (f) => setState(() => _format = f),
         ),
         const SizedBox(height: 16),
         TextField(
@@ -473,54 +558,62 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               final p = _edits[players[i].id] ?? players[i];
               void update(Player next) => setState(() => _edits[p.id] = next);
               // 좁은 화면에서는 옆으로 밀어 볼 수 있게 한다.
+              final controls = <Widget>[
+                SizedBox(
+                  width: 72,
+                  child: Text(p.name, overflow: TextOverflow.ellipsis),
+                ),
+                SegmentedButton<MemberType>(
+                  showSelectedIcon: false,
+                  style: _compact,
+                  segments: const [
+                    ButtonSegment(value: MemberType.core, label: Text('주')),
+                    ButtonSegment(value: MemberType.regular, label: Text('일반')),
+                  ],
+                  selected: {p.memberType},
+                  onSelectionChanged: (s) =>
+                      update(p.copyWith(memberType: s.first)),
+                ),
+                const SizedBox(width: 8),
+                SegmentedButton<Position>(
+                  showSelectedIcon: false,
+                  style: _compact,
+                  segments: [
+                    for (final pos in Position.values)
+                      ButtonSegment(value: pos, label: Text(pos.label)),
+                  ],
+                  selected: {p.mainPosition},
+                  onSelectionChanged: (s) =>
+                      update(p.copyWith(mainPosition: s.first)),
+                ),
+                const SizedBox(width: 8),
+                ScorePicker(
+                  size: 30,
+                  value: p.stats.ovr.round(),
+                  onChanged: (v) => update(
+                    p.copyWith(
+                      stats: PlayerStats.uniform(v),
+                      statsSimple: true,
+                    ),
+                  ),
+                ),
+              ];
+              if (isNarrow(context)) {
+                // 세로: 이름 한 줄 + 조작은 줄바꿈 배치.
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: controls,
+                  ),
+                );
+              }
               return SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 padding: const EdgeInsets.symmetric(vertical: 6),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 72,
-                      child: Text(p.name, overflow: TextOverflow.ellipsis),
-                    ),
-                    SegmentedButton<MemberType>(
-                      showSelectedIcon: false,
-                      style: _compact,
-                      segments: const [
-                        ButtonSegment(value: MemberType.core, label: Text('주')),
-                        ButtonSegment(
-                          value: MemberType.regular,
-                          label: Text('일반'),
-                        ),
-                      ],
-                      selected: {p.memberType},
-                      onSelectionChanged: (s) =>
-                          update(p.copyWith(memberType: s.first)),
-                    ),
-                    const SizedBox(width: 8),
-                    SegmentedButton<Position>(
-                      showSelectedIcon: false,
-                      style: _compact,
-                      segments: [
-                        for (final pos in Position.values)
-                          ButtonSegment(value: pos, label: Text(pos.label)),
-                      ],
-                      selected: {p.mainPosition},
-                      onSelectionChanged: (s) =>
-                          update(p.copyWith(mainPosition: s.first)),
-                    ),
-                    const SizedBox(width: 8),
-                    ScorePicker(
-                      size: 30,
-                      value: p.stats.ovr.round(),
-                      onChanged: (v) => update(
-                        p.copyWith(
-                          stats: PlayerStats.uniform(v),
-                          statsSimple: true,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                child: Row(children: controls),
               );
             },
           ),

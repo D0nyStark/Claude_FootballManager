@@ -82,7 +82,7 @@ void main() {
     );
     await settle(tester);
     await tapAndSettle(tester, find.text('⚽ G'));
-    await tapAndSettle(tester, find.text('5 vs 5'));
+    await startFutsal(tester);
     for (var i = 0; i < 10; i++) {
       await tester.enterText(find.widgetWithText(TextField, '선수 검색'), '선수$i');
       await settle(tester);
@@ -114,15 +114,16 @@ void main() {
     );
     await settle(tester);
     await tapAndSettle(tester, find.text('⚽ G'));
-    await tapAndSettle(tester, find.text('설정'));
+    await tapAndSettle(tester, find.byTooltip('설정'));
     await tapAndSettle(tester, find.text('3팀'));
     await tapAndSettle(tester, find.text('강'));
     final prefs = await io(tester, () => SettingsRepository(db).load(id));
     expect(prefs.defaultTeamCount, 3);
     expect(prefs.repeatAvoidance, RepeatAvoidance.strong);
 
-    await tapAndSettle(tester, find.text('홈'));
-    await tapAndSettle(tester, find.text('5 vs 5'));
+    await tester.pageBack();
+    await settle(tester);
+    await startFutsal(tester);
     final session = await io(tester, () => SessionRepository(db).load(id));
     expect(session!.teamCount, 3);
   });
@@ -141,7 +142,7 @@ void main() {
     );
     await settle(tester);
     await tapAndSettle(tester, find.text('⚽ 수요풋살'));
-    await tapAndSettle(tester, find.text('설정'));
+    await tapAndSettle(tester, find.byTooltip('설정'));
     await tapAndSettle(tester, find.byKey(const Key('exportBackup')));
     final (fileName, bytes) = fakeShare.files.single;
     expect(fileName, startsWith('수요풋살_'));

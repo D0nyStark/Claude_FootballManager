@@ -9,12 +9,13 @@ import 'match_flow_test.dart' as flow;
 /// 13명 · 6vs6 · 2팀(7·6)으로 구장까지 가서 자동 편성.
 Future<void> arrange(WidgetTester tester) async {
   await flow.enterGroup(tester);
-  await tapAndSettle(tester, find.text('6 vs 6'));
+  await startFutsal(tester);
   await tapAndSettle(tester, find.text('전체 선택'));
   for (final n in flow.regularNames) {
     await flow.tapPlayer(tester, n);
   }
   await tapAndSettle(tester, find.text('다음 →'));
+  await setFormat(tester, 6);
   await tapAndSettle(tester, find.byKey(const Key('makeTeams')));
   await tapAndSettle(tester, find.byKey(const Key('autoArrange')));
 }

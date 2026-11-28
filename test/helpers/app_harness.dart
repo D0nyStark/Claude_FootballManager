@@ -104,6 +104,23 @@ Future<void> settle(WidgetTester tester) async {
   }
 }
 
+/// [finder]가 화면에 나올 때까지 실제 비동기 작업(DB·스트림)을 조금씩 흘려보내며 기다린다.
+///
+/// [settle]은 고정 횟수만 기다려서, DB 작업이 여러 단계 이어지는 곳(초대 → 공유 시각 저장 →
+/// 변경 건수 다시 세기)에서는 테스트를 병렬로 돌려 바쁠 때 가끔 덜 끝난 화면을 확인했다.
+Future<void> waitFor(
+  WidgetTester tester,
+  Finder finder, {
+  int rounds = 50,
+}) async {
+  for (var i = 0; i < rounds && finder.evaluate().isEmpty; i++) {
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 10)),
+    );
+    await tester.pump();
+  }
+}
+
 Future<void> tapAndSettle(WidgetTester tester, Finder finder) async {
   // 입력창 포커스가 남아 있으면 스크롤이 입력창 쪽으로 되돌아간다.
   FocusManager.instance.primaryFocus?.unfocus();
@@ -117,3 +134,20 @@ Future<void> tapAndSettle(WidgetTester tester, Finder finder) async {
 /// 테스트 본문에서 DB를 직접 읽고 쓸 때 사용 (가짜 시간 밖에서 실행).
 Future<T> io<T>(WidgetTester tester, Future<T> Function() action) async =>
     (await tester.runAsync(action)) as T;
+
+/// 모임 홈에서 [풋살] 시작 (팀 인원은 이후 팀 설정에서 고른다).
+Future<void> startFutsal(WidgetTester tester) =>
+    tapAndSettle(tester, find.byKey(const Key('modeFutsal')));
+
+/// 인원 스테퍼(−/+)를 눌러 [n] vs [n]으로 맞춘다 (팀 설정·마법사·모임 설정 공통).
+Future<void> setFormat(WidgetTester tester, int n) async {
+  for (var i = 0; i < 6; i++) {
+    final now = tester.widget<Text>(find.byKey(const Key('formatValue'))).data!;
+    final cur = int.parse(now.split(' ').first);
+    if (cur == n) return;
+    await tapAndSettle(
+      tester,
+      find.byKey(Key(cur < n ? 'formatUp' : 'formatDown')),
+    );
+  }
+}

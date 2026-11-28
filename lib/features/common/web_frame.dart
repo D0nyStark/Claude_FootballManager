@@ -4,8 +4,6 @@ import 'package:material_ui/material_ui.dart';
 import '../../platform/web_env.dart';
 
 /// 웹앱 전용 겉틀.
-/// - 웹은 화면 방향을 고정할 수 없어서, 세로로 들면 "가로로 돌려 주세요"를 덮어 보여준다
-///   (아래 화면은 그대로 살아 있어 입력 중이던 내용이 사라지지 않는다).
 /// - 아이폰 사파리 탭에서 열었으면 "홈 화면에 추가" 안내를 한 번 보여준다.
 class WebFrame extends StatefulWidget {
   const WebFrame({super.key, required this.child, this.enabled = kIsWeb});
@@ -34,14 +32,12 @@ class _WebFrameState extends State<WebFrame> {
   @override
   Widget build(BuildContext context) {
     if (!widget.enabled) return widget.child;
-    final size = MediaQuery.sizeOf(context);
-    final portrait = size.height > size.width;
     final showHint = !_hintClosed && isIosBrowser && !isStandaloneWebApp;
     final theme = Theme.of(context);
     return Stack(
       children: [
         widget.child,
-        if (showHint && !portrait)
+        if (showHint)
           Positioned(
             left: 12,
             right: 12,
@@ -73,36 +69,6 @@ class _WebFrameState extends State<WebFrame> {
                       icon: const Icon(Icons.close),
                     ),
                   ],
-                ),
-              ),
-            ),
-          ),
-        if (portrait)
-          Positioned.fill(
-            child: Material(
-              color: theme.colorScheme.surface,
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(32),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        Icons.screen_rotation,
-                        size: 64,
-                        color: theme.colorScheme.primary,
-                      ),
-                      const SizedBox(height: 16),
-                      Text('폰을 가로로 돌려 주세요', style: theme.textTheme.titleLarge),
-                      const SizedBox(height: 8),
-                      Text(
-                        '풋살 팀메이커는 가로 화면 전용이에요.\n'
-                        '돌려도 그대로면 제어 센터에서 "화면 방향 잠금"을 꺼 주세요.',
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    ],
-                  ),
                 ),
               ),
             ),

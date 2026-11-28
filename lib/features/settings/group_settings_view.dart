@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
-import '../../core/models/formation.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../common/common_widgets.dart';
@@ -112,18 +111,13 @@ class GroupSettingsView extends ConsumerWidget {
             ],
           ),
           const SizedBox(height: 16),
-          Text('기본 경기 방식', style: theme.textTheme.labelLarge),
+          Text('풋살 기본 인원', style: theme.textTheme.labelLarge),
           const SizedBox(height: 6),
           Align(
             alignment: Alignment.centerLeft,
-            child: SegmentedButton<MatchFormat>(
-              segments: [
-                for (final f in MatchFormat.values)
-                  ButtonSegment(value: f, label: Text(f.label)),
-              ],
-              selected: {group.defaultFormat},
-              onSelectionChanged: (s) =>
-                  repo.updateGroup(group.id, defaultFormat: s.first),
+            child: FormatStepper(
+              value: group.defaultFormat,
+              onChanged: (f) => repo.updateGroup(group.id, defaultFormat: f),
             ),
           ),
           const SizedBox(height: 16),
@@ -169,17 +163,28 @@ class GroupSettingsView extends ConsumerWidget {
     final settings = ref.read(settingsRepositoryProvider);
     Future<void> set(String key, String value) =>
         settings.set(group.id, key, value);
+    // 세로(좁은 화면)에서는 이름 아래에 선택 버튼을 둔다.
+    final narrow = isNarrow(context);
     Widget row(String label, Widget child) => Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 130,
-            child: Text(label, style: theme.textTheme.labelLarge),
-          ),
-          Flexible(child: child),
-        ],
-      ),
+      child: narrow
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: theme.textTheme.labelLarge),
+                const SizedBox(height: 6),
+                child,
+              ],
+            )
+          : Row(
+              children: [
+                SizedBox(
+                  width: 130,
+                  child: Text(label, style: theme.textTheme.labelLarge),
+                ),
+                Flexible(child: child),
+              ],
+            ),
     );
     return [
       row(

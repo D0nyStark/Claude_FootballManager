@@ -2,21 +2,21 @@
   "version": 1,
   "entries": [
     {
-      "url": "assets/AssetManifest.bin.c820842b.json",
-      "hash": "c820842b",
-      "size": 322,
+      "url": "assets/AssetManifest.bin.70472526.json",
+      "hash": "70472526",
+      "size": 906,
       "urlHashed": true
     },
     {
-      "url": "assets/AssetManifest.eb087103.bin",
-      "hash": "eb087103",
-      "size": 240,
+      "url": "assets/AssetManifest.e75da68e.bin",
+      "hash": "e75da68e",
+      "size": 678,
       "urlHashed": true
     },
     {
-      "url": "assets/FontManifest.c72bfec4.json",
-      "hash": "c72bfec4",
-      "size": 311,
+      "url": "assets/FontManifest.c7d45a26.json",
+      "hash": "c7d45a26",
+      "size": 838,
       "urlHashed": true
     },
     {
@@ -26,9 +26,39 @@
       "urlHashed": true
     },
     {
-      "url": "assets/fonts/MaterialIcons-Regular.ec5fcaba.otf",
-      "hash": "ec5fcaba",
-      "size": 6560,
+      "url": "assets/assets/fonts/Paperlogy-3Light.0f47fdc2.ttf",
+      "hash": "0f47fdc2",
+      "size": 671356,
+      "urlHashed": true
+    },
+    {
+      "url": "assets/assets/fonts/Paperlogy-4Regular.d88f3291.ttf",
+      "hash": "d88f3291",
+      "size": 670172,
+      "urlHashed": true
+    },
+    {
+      "url": "assets/assets/fonts/Paperlogy-6SemiBold.1411017a.ttf",
+      "hash": "1411017a",
+      "size": 668392,
+      "urlHashed": true
+    },
+    {
+      "url": "assets/assets/fonts/Paperlogy-8ExtraBold.fd37f145.ttf",
+      "hash": "fd37f145",
+      "size": 664700,
+      "urlHashed": true
+    },
+    {
+      "url": "assets/assets/home_bg.7e886c1a.jpg",
+      "hash": "7e886c1a",
+      "size": 126533,
+      "urlHashed": true
+    },
+    {
+      "url": "assets/fonts/MaterialIcons-Regular.c729cb92.otf",
+      "hash": "c729cb92",
+      "size": 5660,
       "urlHashed": true
     },
     {
@@ -153,7 +183,7 @@
     },
     {
       "url": "flutter_bootstrap.js",
-      "hash": "faa69f6f",
+      "hash": "0942d39c",
       "size": 14688,
       "urlHashed": false
     },
@@ -189,14 +219,14 @@
     },
     {
       "url": "index.html",
-      "hash": "9c1f6960",
-      "size": 950,
+      "hash": "2b358d5a",
+      "size": 2263,
       "urlHashed": false
     },
     {
-      "url": "main.dart.7a774d75.js",
-      "hash": "7a774d75",
-      "size": 3633652,
+      "url": "main.dart.86579984.js",
+      "hash": "86579984",
+      "size": 3688511,
       "urlHashed": true
     },
     {
@@ -213,7 +243,7 @@
     },
     {
       "url": "version.json",
-      "hash": "2a2af164",
+      "hash": "c7197ca3",
       "size": 100,
       "urlHashed": false
     }

@@ -79,7 +79,7 @@ Future<void> tapPlayer(WidgetTester tester, String name) async {
 void main() {
   testWidgets('게스트 추가: 가로 화면 키보드가 올라와도 이름 칸과 추가 버튼이 보인다', (tester) async {
     await enterGroup(tester);
-    await tapAndSettle(tester, find.text('5 vs 5'));
+    await startFutsal(tester);
     await tapAndSettle(tester, find.text('게스트'));
     // 360dp 중 키보드가 200dp를 차지한 상태.
     tester.view.viewInsets = const FakeViewPadding(bottom: 400);
@@ -101,8 +101,8 @@ void main() {
 
   testWidgets('6vs6 → 주멤버 전체 선택 + 일반멤버 + 게스트 → 3팀 → 팀 짜기 결과', (tester) async {
     await enterGroup(tester);
-    await tapAndSettle(tester, find.text('6 vs 6'));
-    expect(find.text('출전 덱 · 6 vs 6'), findsOneWidget);
+    await startFutsal(tester);
+    expect(find.text('출전 덱 · 풋살'), findsOneWidget);
 
     await tapAndSettle(tester, find.text('전체 선택'));
     expect(find.text('출전 4명'), findsOneWidget);
@@ -121,6 +121,7 @@ void main() {
     expect(find.text('용병 (게스트)'), findsOneWidget);
 
     await tapAndSettle(tester, find.text('다음 →'));
+    await setFormat(tester, 6);
     expect(find.text('팀 설정 · 출전 13명'), findsOneWidget);
     expect(find.text('13명 → 7 · 6'), findsOneWidget);
     await tapAndSettle(tester, find.byTooltip('팀 늘리기'));
@@ -154,16 +155,16 @@ void main() {
     expect(placedCircles(), 12);
   });
 
-  testWidgets('작성 중인 덱은 나갔다 와도 남아 있다 (형식은 새로 고른 것)', (tester) async {
+  testWidgets('작성 중인 덱은 나갔다 와도 남아 있다 (인원은 팀 설정에서 고름)', (tester) async {
     final (db, id) = await enterGroup(tester);
-    await tapAndSettle(tester, find.text('6 vs 6'));
+    await startFutsal(tester);
     await tapPlayer(tester, '김철수');
     await tapPlayer(tester, '정다은');
     expect(find.text('출전 2명'), findsOneWidget);
     await tapAndSettle(tester, find.byTooltip('Back'));
 
-    await tapAndSettle(tester, find.text('5 vs 5'));
-    expect(find.text('출전 덱 · 5 vs 5'), findsOneWidget);
+    await startFutsal(tester);
+    expect(find.text('출전 덱 · 풋살'), findsOneWidget);
     expect(find.text('출전 2명'), findsOneWidget);
     final saved = await io(tester, () => SessionRepository(db).load(id));
     expect(saved!.deckIds, hasLength(2));
@@ -172,7 +173,7 @@ void main() {
 
   testWidgets('키퍼 고정: 자동 배정 → 결과에 고정 키퍼 표시', (tester) async {
     await enterGroup(tester);
-    await tapAndSettle(tester, find.text('5 vs 5'));
+    await startFutsal(tester);
     await tapAndSettle(tester, find.text('전체 선택'));
     for (final name in regularNames.take(6)) {
       await tapPlayer(tester, name);
@@ -199,7 +200,7 @@ void main() {
 
   testWidgets('당일 조건 추가', (tester) async {
     await enterGroup(tester);
-    await tapAndSettle(tester, find.text('5 vs 5'));
+    await startFutsal(tester);
     await tapAndSettle(tester, find.text('전체 선택'));
     await tapPlayer(tester, '정다은');
     await tapAndSettle(tester, find.text('다음 →'));
@@ -213,7 +214,7 @@ void main() {
 
   testWidgets('17명 · 6vs6 · 3팀: 부족 팀에 "+1" 자리, 4팀까지 한 화면', (tester) async {
     await enterGroup(tester);
-    await tapAndSettle(tester, find.text('6 vs 6'));
+    await startFutsal(tester);
     await tapAndSettle(tester, find.text('전체 선택'));
     for (final name in regularNames) {
       await tapPlayer(tester, name);
@@ -225,6 +226,7 @@ void main() {
     }
     expect(find.text('출전 17명'), findsOneWidget);
     await tapAndSettle(tester, find.text('다음 →'));
+    await setFormat(tester, 6);
     await tapAndSettle(tester, find.byTooltip('팀 늘리기'));
     expect(find.text('17명 → 6 · 6 · 5'), findsOneWidget);
     await tapAndSettle(tester, find.byKey(const Key('makeTeams')));
