@@ -9,6 +9,7 @@ import 'app.dart';
 import 'data/db/app_database.dart';
 import 'data/providers.dart';
 import 'data/repositories/device_repository.dart';
+import 'features/common/theme_mode.dart';
 import 'features/invite/invite_actions.dart';
 import 'platform/web_env.dart';
 
@@ -17,7 +18,7 @@ Future<void> main() async {
   final webInvite = kIsWeb ? takeInitialInvite() : null;
   if (kIsWeb) usePathUrlStrategy();
   WidgetsFlutterBinding.ensureInitialized();
-  // v1.7 시안: 세로·가로 모두 지원 (거꾸로 든 세로만 제외).
+  // 세로·가로 모두 지원 (거꾸로 든 세로만 제외, SPEC §8.9).
   await SystemChrome.setPreferredOrientations(const [
     DeviceOrientation.portraitUp,
     DeviceOrientation.landscapeLeft,
@@ -26,12 +27,14 @@ Future<void> main() async {
 
   final db = AppDatabase.open();
   final deviceId = await DeviceRepository(db).deviceId();
+  final savedTheme = await DeviceRepository(db).get(themeModeKey);
 
   runApp(
     ProviderScope(
       overrides: [
         databaseProvider.overrideWithValue(db),
         deviceIdProvider.overrideWithValue(deviceId),
+        initialThemeModeProvider.overrideWithValue(parseThemeMode(savedTheme)),
         // 앱이 초대 링크로 열릴 때 (안내 페이지의 [앱에서 열기] / [웹앱에서 열기]).
         incomingLinksProvider.overrideWithValue(
           kIsWeb

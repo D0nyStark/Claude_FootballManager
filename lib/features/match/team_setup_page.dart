@@ -7,6 +7,7 @@ import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../../data/session/match_session.dart';
 import '../common/common_widgets.dart';
+import '../common/glass.dart';
 import '../players/constraints_view.dart';
 import '../pitch/pitch_page.dart';
 import 'match_session_controller.dart';
@@ -48,19 +49,29 @@ class TeamSetupPage extends ConsumerWidget {
           child: Scaffold(
             appBar: AppBar(title: Text('팀 설정 · 출전 ${deck.length}명')),
             // 세로: 팀 옵션 위, 당일 조건 아래.
-            body: Flex(
-              direction: isNarrow(context) ? Axis.vertical : Axis.horizontal,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Expanded(flex: 3, child: _teamOptions(context, session, deck)),
-                isNarrow(context)
-                    ? const Divider(height: 1)
-                    : const VerticalDivider(width: 1),
-                Expanded(
-                  flex: isNarrow(context) ? 2 : 3,
-                  child: _constraints(context, session, deck, groupConstraints),
-                ),
-              ],
+            body: GlassBody(
+              child: Flex(
+                direction: isNarrow(context) ? Axis.vertical : Axis.horizontal,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    flex: 3,
+                    child: _teamOptions(context, session, deck),
+                  ),
+                  isNarrow(context)
+                      ? const Divider(height: 1)
+                      : const VerticalDivider(width: 1),
+                  Expanded(
+                    flex: isNarrow(context) ? 2 : 3,
+                    child: _constraints(
+                      context,
+                      session,
+                      deck,
+                      groupConstraints,
+                    ),
+                  ),
+                ],
+              ),
             ),
             bottomNavigationBar: SafeArea(
               child: Padding(

@@ -40,7 +40,7 @@ class BalanceHeader extends StatelessWidget {
     if (b != null && isNarrow(context)) {
       // 세로: 윗줄 뒤로·점수, 아랫줄 세부 점수·편성안 선택.
       return Material(
-        color: theme.colorScheme.surfaceContainerHigh,
+        color: Colors.transparent,
         child: SizedBox(
           height: 88,
           child: Column(
@@ -76,7 +76,7 @@ class BalanceHeader extends StatelessWidget {
       );
     }
     return Material(
-      color: theme.colorScheme.surfaceContainerHigh,
+      color: Colors.transparent,
       child: SizedBox(
         height: 48,
         child: Row(

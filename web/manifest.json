@@ -4,7 +4,7 @@
     "start_url": ".",
     "display": "standalone",
     "background_color": "#F4F7F2",
-    "theme_color": "#1B8A3C",
+    "theme_color": "#3B6A41",
     "description": "실력 균형이 맞는 풋살 팀을 자동으로 짜 주는 앱",
     "orientation": "landscape",
     "prefer_related_applications": false,

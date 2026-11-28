@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import '../common/common_widgets.dart';
+import '../common/glass.dart';
 
 import '../../core/balancer/balancer.dart';
 import '../../core/models/models.dart';
@@ -363,52 +364,56 @@ class _PitchPageState extends ConsumerState<PitchPage>
                     ),
                   ),
                   Expanded(
-                    child: Stack(
-                      key: _stackKey,
-                      children: [
-                        if (isNarrow(context))
-                          // 세로: 위 출전 덱 띠 / 가운데 구장(위아래로 쌓기) / 아래 버튼 줄.
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              CoachTarget(
-                                id: 'pitch.deck',
-                                child: _deckStrip(lineup),
-                              ),
-                              const Divider(height: 1),
-                              Expanded(child: _courts(lineup, balance)),
-                              const Divider(height: 1),
-                              _rail(),
-                            ],
-                          )
-                        else
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              CoachTarget(
-                                id: 'pitch.deck',
-                                child: _deckPanel(lineup),
-                              ),
-                              const VerticalDivider(width: 1),
-                              Expanded(child: _courts(lineup, balance)),
-                              const VerticalDivider(width: 1),
-                              _rail(),
-                            ],
-                          ),
-                        if (_flying)
-                          Positioned.fill(
-                            child: IgnorePointer(
-                              child: AnimatedBuilder(
-                                animation: _fly,
-                                builder: (context, _) => Stack(
-                                  children: [
-                                    for (final f in _flights) _flight(f),
-                                  ],
+                    // 구장·덱·버튼을 유리 패널 하나에 (SPEC §8.8).
+                    child: GlassBody(
+                      padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+                      child: Stack(
+                        key: _stackKey,
+                        children: [
+                          if (isNarrow(context))
+                            // 세로: 위 출전 덱 띠 / 가운데 구장(위아래로 쌓기) / 아래 버튼 줄.
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                CoachTarget(
+                                  id: 'pitch.deck',
+                                  child: _deckStrip(lineup),
+                                ),
+                                const Divider(height: 1),
+                                Expanded(child: _courts(lineup, balance)),
+                                const Divider(height: 1),
+                                _rail(),
+                              ],
+                            )
+                          else
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                CoachTarget(
+                                  id: 'pitch.deck',
+                                  child: _deckPanel(lineup),
+                                ),
+                                const VerticalDivider(width: 1),
+                                Expanded(child: _courts(lineup, balance)),
+                                const VerticalDivider(width: 1),
+                                _rail(),
+                              ],
+                            ),
+                          if (_flying)
+                            Positioned.fill(
+                              child: IgnorePointer(
+                                child: AnimatedBuilder(
+                                  animation: _fly,
+                                  builder: (context, _) => Stack(
+                                    children: [
+                                      for (final f in _flights) _flight(f),
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                 ],

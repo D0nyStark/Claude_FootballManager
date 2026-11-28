@@ -4,6 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../common/common_widgets.dart';
+import '../common/theme_mode.dart';
 import '../tutorial/tutorial.dart';
 import '../../core/balancer/balance_request.dart';
 import '../../core/models/team_constraint.dart';
@@ -77,6 +78,33 @@ class GroupSettingsView extends ConsumerWidget {
                 );
             },
           ),
+          // 화면 모드: 이 기기에만 저장 (모임과 함께 공유되지 않음). 웹앱은 밝게 고정.
+          if (themeChoiceAvailable) ...[
+            Text('화면 모드 (이 기기)', style: theme.textTheme.labelLarge),
+            const SizedBox(height: 6),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: SegmentedButton<ThemeMode>(
+                key: const Key('themeMode'),
+                segments: const [
+                  ButtonSegment(
+                    value: ThemeMode.light,
+                    icon: Icon(Icons.light_mode),
+                    label: Text('밝게'),
+                  ),
+                  ButtonSegment(
+                    value: ThemeMode.dark,
+                    icon: Icon(Icons.dark_mode),
+                    label: Text('어둡게'),
+                  ),
+                ],
+                selected: {ref.watch(themeModeProvider)},
+                onSelectionChanged: (s) =>
+                    ref.read(themeModeProvider.notifier).select(s.first),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
           const SizedBox(height: 8),
           Text('아이콘', style: theme.textTheme.labelLarge),
           Wrap(

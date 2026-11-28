@@ -77,9 +77,14 @@ class _GroupListPageState extends ConsumerState<GroupListPage> {
       steps: () => TutorialSteps.groupList,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text(
-            'Football Team Maker',
-            style: TextStyle(fontWeight: FontWeight.w800),
+          // 세로(좁은 화면)에서 잘리지 않게 필요하면 글자를 줄인다.
+          title: const FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Football Team Maker',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
           ),
           actions: [
             IconButton(

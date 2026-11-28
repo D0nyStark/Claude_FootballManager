@@ -31,9 +31,8 @@
     font-style: normal;
   }
   :root { --green:#1b8a3c; --bg:#f4f7f2; --fg:#1c2a1f; --muted:#5d6b60; --card:#fff; }
-  @media (prefers-color-scheme: dark) {
-    :root { --bg:#121813; --fg:#e6ede7; --muted:#9fb0a3; --card:#1c241e; }
-  }
+  /* 웹은 밝은 모드로 고정 (SPEC §8.8): 폰이 다크 모드여도 밝게 보인다. */
+  :root { color-scheme: light; }
   * { box-sizing: border-box; }
   body { margin:0; font-family: 'Paperlogy', sans-serif; font-weight: 400;
          background:var(--bg); color:var(--fg); }
@@ -42,7 +41,7 @@
   h1, h2 { font-weight:800; }
   h3 { font-weight:600; }
   h1 { font-size:22px; margin:0 0 4px; }
-  .muted { color:var(--muted); font-size:14px; line-height:1.5; font-weight:300; }
+  .muted { color:var(--muted); font-size:14px; line-height:1.5; font-weight:400; }
   .group { font-size:20px; font-weight:800; margin:16px 0 4px; }
   button, a.btn { display:block; width:100%; margin-top:12px; padding:14px; border-radius:12px;
          font-size:16px; font-weight:600; text-align:center; text-decoration:none; border:0; cursor:pointer; }

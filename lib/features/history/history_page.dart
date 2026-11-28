@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
+import '../common/glass.dart';
+
 import '../../core/models/models.dart';
 import '../../data/history/confirmed_lineup.dart';
 import '../../data/providers.dart';
@@ -21,24 +23,26 @@ class HistoryPage extends ConsumerWidget {
     final history = ref.watch(historyProvider(group.id));
     return Scaffold(
       appBar: AppBar(title: const Text('편성 이력 (최근 3개)')),
-      body: history.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('$e')),
-        data: (list) => list.isEmpty
-            ? const Center(child: Text('아직 확정한 편성이 없어요.'))
-            : ListView(
-                padding: const EdgeInsets.all(12),
-                children: [
-                  for (final h in list) _HistoryCard(group: group, entry: h),
-                  const Padding(
-                    padding: EdgeInsets.all(8),
-                    child: Text(
-                      '확정한 편성은 다음 팀 짜기 때 같은 조합을 피하는 데 쓰여요. '
-                      '잘못 확정했다면 삭제하세요.',
+      body: GlassBody(
+        child: history.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (e, _) => Center(child: Text('$e')),
+          data: (list) => list.isEmpty
+              ? const Center(child: Text('아직 확정한 편성이 없어요.'))
+              : ListView(
+                  padding: const EdgeInsets.all(12),
+                  children: [
+                    for (final h in list) _HistoryCard(group: group, entry: h),
+                    const Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text(
+                        '확정한 편성은 다음 팀 짜기 때 같은 조합을 피하는 데 쓰여요. '
+                        '잘못 확정했다면 삭제하세요.',
+                      ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+        ),
       ),
     );
   }

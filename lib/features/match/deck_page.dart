@@ -7,6 +7,7 @@ import '../../data/repositories/group_repository.dart';
 import '../../data/repositories/player_repository.dart';
 import '../../data/session/match_session.dart';
 import '../common/common_widgets.dart';
+import '../common/glass.dart';
 import 'match_session_controller.dart';
 import 'team_setup_page.dart';
 import '../tutorial/coach_marks.dart';
@@ -100,9 +101,11 @@ class _DeckPageState extends ConsumerState<DeckPage> {
             const SizedBox(width: 8),
           ],
         ),
-        body: controller == null || !players.hasValue
-            ? const Center(child: CircularProgressIndicator())
-            : _body(controller, players.value!),
+        body: GlassBody(
+          child: controller == null || !players.hasValue
+              ? const Center(child: CircularProgressIndicator())
+              : _body(controller, players.value!),
+        ),
       ),
     );
   }
@@ -206,7 +209,8 @@ class _DeckPageState extends ConsumerState<DeckPage> {
       children: [
         Container(
           height: 40,
-          color: theme.colorScheme.surfaceContainerHighest,
+          // 유리 패널 안의 구분 줄: 배경을 살짝만 (밝게·어둡게 모두).
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
           padding: const EdgeInsets.only(left: 12, right: 4),
           child: Row(
             children: [

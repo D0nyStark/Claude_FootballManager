@@ -1,11 +1,13 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 
 import 'features/common/glass.dart';
+import 'features/common/theme_mode.dart';
 import 'features/common/web_frame.dart';
 import 'features/groups/group_list_page.dart';
 
 /// 풋살 팀메이커 앱 루트.
-class FutsalTeamMakerApp extends StatelessWidget {
+class FutsalTeamMakerApp extends ConsumerWidget {
   const FutsalTeamMakerApp({super.key, this.autoEnterSingleGroup = true});
 
   /// 모임이 1개뿐이면 바로 들어가기 (테스트에서는 끈다).
@@ -35,7 +37,7 @@ class FutsalTeamMakerApp extends StatelessWidget {
       colorScheme: scheme,
       useMaterial3: true,
       fontFamily: 'Paperlogy',
-      // 굵기 계층: 대제목·핵심 숫자 800 / 소제목·주요 버튼 600 / 본문 400 / 부가설명·캡션 300
+      // 굵기 계층: 대제목·핵심 숫자 800 / 소제목·주요 버튼 600 / 본문·캡션 400 (캡션은 작은 크기·회색으로 구분)
       textTheme: const TextTheme(
         displayLarge: TextStyle(fontWeight: FontWeight.w800),
         displayMedium: TextStyle(fontWeight: FontWeight.w800),
@@ -51,7 +53,7 @@ class FutsalTeamMakerApp extends StatelessWidget {
         labelSmall: TextStyle(fontWeight: FontWeight.w400),
         bodyLarge: TextStyle(fontWeight: FontWeight.w400),
         bodyMedium: TextStyle(fontWeight: FontWeight.w400),
-        bodySmall: TextStyle(fontWeight: FontWeight.w300),
+        bodySmall: TextStyle(fontWeight: FontWeight.w400),
       ),
       scaffoldBackgroundColor: Colors.transparent,
       appBarTheme: const AppBarThemeData(
@@ -131,8 +133,10 @@ class FutsalTeamMakerApp extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
+      // 화면 모드: 앱은 사용자가 고름(기본 밝게), 웹은 밝게 고정 (SPEC §8.8).
+      themeMode: ref.watch(themeModeProvider),
       title: title,
       debugShowCheckedModeBanner: false,
       theme: _theme(Brightness.light),

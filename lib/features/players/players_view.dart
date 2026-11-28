@@ -232,7 +232,7 @@ class _PlayersViewState extends ConsumerState<PlayersView> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Container(
-            color: Colors.white.withValues(alpha: 0.35),
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: Text(
               '$title (${players.length})',

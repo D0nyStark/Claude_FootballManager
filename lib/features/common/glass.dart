@@ -36,20 +36,29 @@ class Glass extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = BorderRadius.circular(radius);
+    // 세 가지 바탕: 사진 위([dark]) / 밝은 화면(흰 배경) / 어두운 화면(다크 모드).
+    final darkTheme = Theme.of(context).brightness == Brightness.dark;
     final base = tint ?? Colors.white;
-    final fillTop = base.withValues(
-      alpha: tint != null ? 0.62 : (dark ? 0.22 : 0.66),
-    );
-    final fillBottom = base.withValues(
-      alpha: tint != null ? 0.42 : (dark ? 0.08 : 0.34),
-    );
+    final double topA, bottomA, edgeA, shadowA;
+    if (tint != null) {
+      (topA, bottomA, edgeA, shadowA) = (0.62, 0.42, 0.42, 0.22);
+    } else if (dark) {
+      (topA, bottomA, edgeA, shadowA) = (0.22, 0.08, 0.42, 0.22);
+    } else if (darkTheme) {
+      // 다크 모드: 흰색을 아주 옅게 — 글자(밝은색)가 잘 읽히게.
+      (topA, bottomA, edgeA, shadowA) = (0.08, 0.03, 0.14, 0.35);
+    } else {
+      (topA, bottomA, edgeA, shadowA) = (0.66, 0.34, 0.85, 0.10);
+    }
+    final fillTop = base.withValues(alpha: topA);
+    final fillBottom = base.withValues(alpha: bottomA);
     return DecoratedBox(
       decoration: BoxDecoration(
         borderRadius: r,
         boxShadow: shadow
             ? [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: dark ? 0.22 : 0.10),
+                  color: Colors.black.withValues(alpha: shadowA),
                   blurRadius: 18,
                   offset: const Offset(0, 6),
                 ),
@@ -69,9 +78,10 @@ class Glass extends StatelessWidget {
                 colors: [fillTop, fillBottom],
               ),
               border: Border.all(
-                color: dark
-                    ? Colors.white.withValues(alpha: 0.42)
-                    : AppColors.point.withValues(alpha: 0.22),
+                // 밝은 화면(흰 배경)만 포인트색 테두리, 나머지는 흰색.
+                color: !dark && !darkTheme && tint == null
+                    ? AppColors.point.withValues(alpha: 0.22)
+                    : Colors.white.withValues(alpha: edgeA),
                 width: 1,
               ),
             ),
@@ -154,7 +164,7 @@ class GlassButton extends StatelessWidget {
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,
-                            fontWeight: FontWeight.w300,
+                            fontWeight: FontWeight.w400,
                           ),
                         ),
                     ],
@@ -190,6 +200,29 @@ class AppBackground extends StatelessWidget {
         ),
       ),
       child: child,
+    );
+  }
+}
+
+/// 홈을 뺀 화면의 본문을 유리 패널 하나에 담는다 (SPEC §8.8).
+/// 키보드가 올라오면(가로 화면에서 높이가 모자람) 여백·모서리·그림자를 없앤다.
+/// Scaffold 본문 안에서는 MediaQuery의 키보드 높이가 0이라 화면(View)에서 직접 읽는다.
+class GlassBody extends StatelessWidget {
+  const GlassBody({
+    super.key,
+    required this.child,
+    this.padding = const EdgeInsets.fromLTRB(12, 0, 12, 12),
+  });
+
+  final Widget child;
+  final EdgeInsets padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboard = View.of(context).viewInsets.bottom > 0;
+    return Padding(
+      padding: keyboard ? EdgeInsets.zero : padding,
+      child: Glass(radius: keyboard ? 0 : 20, shadow: !keyboard, child: child),
     );
   }
 }

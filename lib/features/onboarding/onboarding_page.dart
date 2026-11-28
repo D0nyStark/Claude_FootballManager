@@ -5,6 +5,7 @@ import '../../core/models/models.dart';
 import '../../data/providers.dart';
 import '../../data/repositories/group_repository.dart';
 import '../common/common_widgets.dart';
+import '../common/glass.dart';
 import '../group/group_shell_page.dart';
 import '../invite/invite_actions.dart';
 import 'roster_parser.dart';
@@ -208,83 +209,92 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
               ),
             )
           : null,
-      body: narrow
-          ? _narrowBody(theme, keyboard)
-          : Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                SizedBox(
-                  width: 130,
-                  child: ListView(
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    children: [
-                      for (var i = 0; i < stepTitles.length; i++)
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
-                          ),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 12,
-                                backgroundColor: i <= _step
-                                    ? theme.colorScheme.primary
-                                    : theme.colorScheme.surfaceContainerHighest,
-                                child: i < _step
-                                    ? Icon(
-                                        Icons.check,
-                                        size: 14,
-                                        color: theme.colorScheme.onPrimary,
-                                      )
-                                    : Text(
-                                        '${i + 1}',
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: i == _step
-                                              ? theme.colorScheme.onPrimary
-                                              : theme
-                                                    .colorScheme
-                                                    .onSurfaceVariant,
+      body: GlassBody(
+        child: narrow
+            ? _narrowBody(theme, keyboard)
+            : Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: 130,
+                    child: ListView(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      children: [
+                        for (var i = 0; i < stepTitles.length; i++)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 12,
+                                  backgroundColor: i <= _step
+                                      ? theme.colorScheme.primary
+                                      : theme
+                                            .colorScheme
+                                            .surfaceContainerHighest,
+                                  child: i < _step
+                                      ? Icon(
+                                          Icons.check,
+                                          size: 14,
+                                          color: theme.colorScheme.onPrimary,
+                                        )
+                                      : Text(
+                                          '${i + 1}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: i == _step
+                                                ? theme.colorScheme.onPrimary
+                                                : theme
+                                                      .colorScheme
+                                                      .onSurfaceVariant,
+                                          ),
                                         ),
-                                      ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  stepTitles[i],
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontWeight: i == _step
-                                        ? FontWeight.w700
-                                        : FontWeight.normal,
-                                    color: i == _step
-                                        ? theme.colorScheme.primary
-                                        : null,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    stepTitles[i],
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontWeight: i == _step
+                                          ? FontWeight.w700
+                                          : FontWeight.normal,
+                                      color: i == _step
+                                          ? theme.colorScheme.primary
+                                          : null,
+                                    ),
                                   ),
                                 ),
-                              ),
-                            ],
+                              ],
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const VerticalDivider(width: 1),
-                Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(24, keyboard ? 4 : 16, 24, 8),
-                    child: switch (_step) {
-                      0 => _infoStep(theme),
-                      1 => _rosterStep(theme, keyboard: keyboard),
-                      2 => _specStep(theme),
-                      _ => _inviteStep(theme),
-                    },
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        24,
+                        keyboard ? 4 : 16,
+                        24,
+                        8,
+                      ),
+                      child: switch (_step) {
+                        0 => _infoStep(theme),
+                        1 => _rosterStep(theme, keyboard: keyboard),
+                        2 => _specStep(theme),
+                        _ => _inviteStep(theme),
+                      },
+                    ),
                   ),
-                ),
-              ],
-            ),
+                ],
+              ),
+      ),
     );
   }
 
@@ -439,7 +449,10 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   Widget _rosterStep(ThemeData theme, {required bool keyboard}) {
     final existing = ref.watch(playersProvider(_groupId!)).value ?? const [];
-    return Row(
+    // 세로(좁은 화면): 붙여넣기 칸 위, 추가할 명단 아래.
+    final narrow = isNarrow(context);
+    return Flex(
+      direction: narrow ? Axis.vertical : Axis.horizontal,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
@@ -503,7 +516,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
             ],
           ),
         ),
-        const SizedBox(width: 24),
+        narrow ? const SizedBox(height: 12) : const SizedBox(width: 24),
         Expanded(
           child: ListView(
             children: [

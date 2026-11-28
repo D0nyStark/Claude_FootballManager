@@ -168,12 +168,7 @@ class _GroupSubPage extends ConsumerWidget {
           error: (e, _) => Center(child: Text('불러오지 못했어요: $e')),
           data: (g) => g == null
               ? const SizedBox.shrink()
-              : Padding(
-                  padding: keyboard
-                      ? EdgeInsets.zero
-                      : const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                  child: Glass(radius: keyboard ? 0 : 20, child: builder(g)),
-                ),
+              : GlassBody(child: builder(g)),
         ),
       ),
     );
